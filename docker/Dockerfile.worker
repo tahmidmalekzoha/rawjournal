@@ -1,0 +1,38 @@
+# Trade sync worker — Wine + Python + MT5
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DISPLAY=:99
+
+# Install Wine + Xvfb + Python
+RUN dpkg --add-architecture i386 && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        wine64 wine32 winbind xvfb \
+        python3.11 python3.11-venv python3-pip \
+        wget ca-certificates \
+        supervisor && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create working dirs
+RUN mkdir -p /opt/mt5 /opt/sync-engine /var/log/rawjournal
+
+# Python venv
+RUN python3.11 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install Python deps
+COPY sync-engine/requirements.txt /opt/sync-engine/requirements.txt
+RUN pip install --no-cache-dir -r /opt/sync-engine/requirements.txt
+
+# Copy sync engine code
+COPY sync-engine/ /opt/sync-engine/
+
+# Copy startup script
+COPY docker/scripts/start-worker.sh /opt/start-worker.sh
+RUN chmod +x /opt/start-worker.sh
+
+WORKDIR /opt/sync-engine
+
+ENTRYPOINT ["/opt/start-worker.sh"]

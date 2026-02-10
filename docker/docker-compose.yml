@@ -1,0 +1,115 @@
+# RawJournal MT5 Workers — Docker Compose
+# Deploy via Coolify: point to this file in the docker/ directory
+# Build context is repo root (../) so Dockerfiles can COPY sync-engine/
+
+services:
+  scheduler:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.scheduler
+    ports:
+      - "8080:8080"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import socket; s=socket.socket(); s.connect((\"localhost\",8080)); s.close()' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  worker-1:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      - WORKER_ID=1
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - REDIS_URL=redis://redis:6379
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    volumes:
+      - mt5-data-1:/opt/mt5/worker_1
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker-2:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      - WORKER_ID=2
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - REDIS_URL=redis://redis:6379
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    volumes:
+      - mt5-data-2:/opt/mt5/worker_2
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker-3:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      - WORKER_ID=3
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - REDIS_URL=redis://redis:6379
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    volumes:
+      - mt5-data-3:/opt/mt5/worker_3
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker-4:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      - WORKER_ID=4
+      - IS_MARKET_DATA_WORKER=true
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - REDIS_URL=redis://redis:6379
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - DEMO_MT5_LOGIN=${DEMO_MT5_LOGIN}
+      - DEMO_MT5_PASSWORD=${DEMO_MT5_PASSWORD}
+      - DEMO_MT5_SERVER=${DEMO_MT5_SERVER}
+    volumes:
+      - mt5-data-4:/opt/mt5/worker_4
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  mt5-data-1:
+  mt5-data-2:
+  mt5-data-3:
+  mt5-data-4:
+  redis-data:

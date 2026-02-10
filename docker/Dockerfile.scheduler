@@ -1,0 +1,15 @@
+# Scheduler — FastAPI WebSocket coordinator (no Wine needed, lighter image)
+FROM python:3.11-slim
+
+RUN mkdir -p /opt/sync-engine /var/log/rawjournal
+
+COPY sync-engine/requirements.txt /opt/sync-engine/requirements.txt
+RUN pip install --no-cache-dir -r /opt/sync-engine/requirements.txt
+
+COPY sync-engine/ /opt/sync-engine/
+
+WORKDIR /opt/sync-engine
+
+EXPOSE 8080
+
+CMD ["uvicorn", "scheduler:app", "--host", "0.0.0.0", "--port", "8080"]

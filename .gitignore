@@ -1,0 +1,13 @@
+node_modules/
+.next/
+.env
+.env.local
+*.log
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+mt5-data-*/
