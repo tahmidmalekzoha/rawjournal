@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -10,37 +11,60 @@ export default async function DashboardPage() {
     .select("*")
     .order("created_at", { ascending: false });
 
-  // Fetch recent trades
+  // Fetch recent closed trades
   const { data: trades } = await supabase
     .from("trades")
     .select("*")
-    .order("entry_timestamp", { ascending: false })
+    .eq("status", "closed")
+    .order("exit_timestamp", { ascending: false })
     .limit(10);
 
   // Fetch open positions
   const { data: positions } = await supabase.from("open_positions").select("*");
 
-  const totalPnl = trades?.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0) ?? 0;
-  const winCount = trades?.filter((t: any) => t.pnl && t.pnl > 0).length ?? 0;
-  const tradeCount = trades?.length ?? 0;
+  // Stats from all closed trades
+  const { data: allTrades } = await supabase
+    .from("trades")
+    .select("pnl, direction, status")
+    .eq("status", "closed");
+
+  const totalPnl = allTrades?.reduce((s: number, t: any) => s + (t.pnl || 0), 0) ?? 0;
+  const winCount = allTrades?.filter((t: any) => t.pnl && t.pnl > 0).length ?? 0;
+  const lossCount = allTrades?.filter((t: any) => t.pnl && t.pnl < 0).length ?? 0;
+  const totalCount = allTrades?.length ?? 0;
+  const winRate = totalCount > 0 ? ((winCount / totalCount) * 100).toFixed(1) : "—";
+  const grossWin = allTrades?.filter((t: any) => t.pnl > 0).reduce((s: number, t: any) => s + t.pnl, 0) ?? 0;
+  const grossLoss = Math.abs(allTrades?.filter((t: any) => t.pnl < 0).reduce((s: number, t: any) => s + t.pnl, 0) ?? 0);
+  const profitFactor = grossLoss > 0 ? (grossWin / grossLoss).toFixed(2) : grossWin > 0 ? "∞" : "—";
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div className="flex gap-2">
+          <Link
+            href="/dashboard/trades/import"
+            className="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary transition-colors hover:bg-surface-hover"
+          >
+            Import CSV
+          </Link>
+          <Link
+            href="/dashboard/trades/add"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+          >
+            + Add Trade
+          </Link>
+        </div>
+      </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Accounts" value={accounts?.length ?? 0} />
-        <StatCard label="Open Positions" value={positions?.length ?? 0} />
-        <StatCard
-          label="Recent P&L"
-          value={`$${totalPnl.toFixed(2)}`}
-          color={totalPnl >= 0 ? "text-profit" : "text-loss"}
-        />
-        <StatCard
-          label="Win Rate"
-          value={tradeCount > 0 ? `${((winCount / tradeCount) * 100).toFixed(0)}%` : "—"}
-        />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <StatCard label="Total P&L" value={`$${totalPnl.toFixed(2)}`} color={totalPnl >= 0 ? "text-profit" : "text-loss"} />
+        <StatCard label="Win Rate" value={typeof winRate === "string" ? `${winRate}%` : "—"} color={parseFloat(winRate as string) >= 50 ? "text-profit" : "text-loss"} />
+        <StatCard label="Profit Factor" value={profitFactor} />
+        <StatCard label="Total Trades" value={totalCount} />
+        <StatCard label="Wins" value={winCount} color="text-profit" />
+        <StatCard label="Losses" value={lossCount} color="text-loss" />
       </div>
 
       {/* Open positions */}
@@ -84,7 +108,10 @@ export default async function DashboardPage() {
 
       {/* Recent trades */}
       <section>
-        <h2 className="mb-3 text-lg font-semibold">Recent Trades</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Recent Trades</h2>
+          <Link href="/dashboard/trades" className="text-sm text-accent hover:underline">View all</Link>
+        </div>
         {trades && trades.length > 0 ? (
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-sm">
@@ -102,7 +129,9 @@ export default async function DashboardPage() {
               <tbody>
                 {trades.map((t: any) => (
                   <tr key={t.id} className="border-b border-border last:border-0 hover:bg-surface-hover">
-                    <td className="px-4 py-3 font-medium">{t.symbol}</td>
+                    <td className="px-4 py-3 font-medium">
+                      <Link href={`/dashboard/trades/${t.id}`} className="hover:text-accent">{t.symbol}</Link>
+                    </td>
                     <td className="px-4 py-3">
                       <span className={t.direction === "buy" ? "text-profit" : "text-loss"}>
                         {t.direction.toUpperCase()}
@@ -122,7 +151,10 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <div className="rounded-xl border border-border bg-surface p-8 text-center text-text-secondary">
-            No trades yet. Connect your MT5 account or add a trade manually.
+            No trades yet.{" "}
+            <Link href="/dashboard/trades/add" className="text-accent hover:underline">Add a trade manually</Link>
+            {" "}or{" "}
+            <Link href="/dashboard/trades/import" className="text-accent hover:underline">import from CSV</Link>.
           </div>
         )}
       </section>

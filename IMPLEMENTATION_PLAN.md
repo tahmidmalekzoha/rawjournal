@@ -14,9 +14,9 @@
 - ✅ **Phase 2** — Core Backend (SQL schema, RLS, triggers)
 - ✅ **Phase 3** — MT5 Sync Engine (Python workers complete)
 - ✅ **Phase 4** — Frontend Foundation (Next.js scaffold with auth + dashboard)
-- ⬜ **Phase 5** — Trade Management (manual entry, CSV import, filtering)
-- ⬜ **Phase 6** — Analytics & Charts (metrics calculations, TradingView charts)
-- ⬜ **Phase 7** — Journaling System (trade notes, tags, screenshots)
+- ✅ **Phase 5** — Trade Management (manual entry, CSV import, filtering)
+- ✅ **Phase 6** — Analytics & Charts (metrics calculations, TradingView charts)
+- ✅ **Phase 7** — Journaling System (trade notes, tags, screenshots)
 - ⬜ **Phase 8** — Payments & Subscriptions (Stripe integration)
 - ⬜ **Phase 9** — Polish & Optimization (UI refinements, performance)
 - ⬜ **Phase 10** — Testing & Launch (E2E tests, production deployment)
@@ -31,9 +31,9 @@
 4. [Phase 2 — Core Backend](#phase-2--core-backend) ✅
 5. [Phase 3 — MT5 Sync Engine](#phase-3--mt5-sync-engine) ✅
 6. [Phase 4 — Frontend Foundation](#phase-4--frontend-foundation) ✅
-7. [Phase 5 — Trade Management](#phase-5--trade-management)
-8. [Phase 6 — Analytics & Charts](#phase-6--analytics--charts)
-9. [Phase 7 — Journaling System](#phase-7--journaling-system)
+7. [Phase 5 — Trade Management](#phase-5--trade-management) ✅
+8. [Phase 6 — Analytics & Charts](#phase-6--analytics--charts) ✅
+9. [Phase 7 — Journaling System](#phase-7--journaling-system) ✅
 10. [Phase 8 — Payments & Subscriptions](#phase-8--payments--subscriptions)
 11. [Phase 9 — Polish & Optimization](#phase-9--polish--optimization)
 12. [Phase 10 — Testing & Launch](#phase-10--testing--launch)
@@ -431,22 +431,21 @@ Using **Coolify** (open-source deployment platform) to manage:
 
 ---
 
-## Phase 5 — Trade Management
+## Phase 5 — Trade Management ✅
 
-> **Goal:** Manual trade entry, CSV import, filtering, search
-> **Duration:** 3-4 days
-> **Depends on:** Phase 2, 4
-> **Status:** ⬜ NOT STARTED
-
-### TBD — Implementation pending
+> **Goal:** Manual trade entry, CSV import, trade list, trade detail page.
+> **Duration:** 4-5 days
+> **Depends on:** Phase 4 (frontend foundation)
+> **Status:** ✅ COMPLETED
 
 ---
 
-## Phase 6 — Analytics & Charts
+## Phase 6 — Analytics & Charts ✅
 
 > **Goal:** Dashboard analytics, equity curves, calendar heatmap, session breakdown, TradingView charts.
 > **Duration:** 5-6 days
 > **Depends on:** Phase 5 (trades exist in DB)
+> **Status:** ✅ COMPLETED
 
 ### Step 6.1 — Analytics Computation API
 - [ ] Configure timezone: `timedatectl set-timezone UTC`
@@ -1661,11 +1660,12 @@ CREATE TRIGGER update_journals_timestamp BEFORE UPDATE ON public.journals
 
 ---
 
-## Phase 6 — Analytics & Charts
+## Phase 6 — Analytics & Charts ✅
 
 > **Goal:** Dashboard analytics, equity curves, calendar heatmap, session breakdown, TradingView charts.
 > **Duration:** 5-6 days
 > **Depends on:** Phase 5 (trades exist in DB)
+> **Status:** ✅ COMPLETED
 
 ### Step 6.1 — Analytics Computation API
 - [ ] Route: `GET /api/trades/analytics?account_id=...&period=...`
@@ -1788,11 +1788,12 @@ CREATE TRIGGER update_journals_timestamp BEFORE UPDATE ON public.journals
 
 ---
 
-## Phase 7 — Journaling System
+## Phase 7 — Journaling System ✅
 
 > **Goal:** Rich journaling with notes, tags, mood, screenshots, quick journal from notification.
 > **Duration:** 3-4 days
 > **Depends on:** Phase 5 (trade detail page)
+> **Status:** ✅ COMPLETED
 
 ### Step 7.1 — Journal Editor Component
 - [ ] Integrated into trade detail page (`/trades/[id]`)

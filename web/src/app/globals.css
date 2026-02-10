@@ -10,6 +10,15 @@ body {
   @apply bg-background text-text-primary antialiased;
 }
 
+/* Shared input styles */
+.input {
+  @apply w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-text-primary outline-none transition-colors focus:border-accent;
+}
+
+.input-sm {
+  @apply rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text-primary outline-none transition-colors focus:border-accent;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
