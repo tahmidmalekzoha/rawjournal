@@ -318,7 +318,7 @@ export default function AddTradePage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-accent py-3 font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
+          className="w-full rounded-lg bg-accent py-3 font-medium text-black transition-colors hover:bg-accent-hover disabled:opacity-50"
         >
           {loading ? "Adding..." : "Add Trade"}
         </button>

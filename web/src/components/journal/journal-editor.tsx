@@ -80,7 +80,7 @@ export default function JournalEditor({ tradeId, journal, tags, onUpdate }: Prop
     if (!newTag.trim()) return;
     const { data } = await supabase
       .from("tags")
-      .insert({ name: newTag.trim(), color: "#6366f1" })
+      .insert({ name: newTag.trim(), color: "#737373" })
       .select()
       .single();
     if (data) {

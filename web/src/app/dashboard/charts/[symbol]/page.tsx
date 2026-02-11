@@ -49,19 +49,19 @@ export default function ChartPage({ params }: { params: { symbol: string } }) {
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
       height: 500,
-      layout: { background: { color: "#0a0a0f" }, textColor: "#a1a1aa" },
-      grid: { vertLines: { color: "#1a1a24" }, horzLines: { color: "#1a1a24" } },
-      timeScale: { timeVisible: true, borderColor: "#2a2a34" },
+      layout: { background: { color: "#000000" }, textColor: "#737373" },
+      grid: { vertLines: { color: "#1a1a1a" }, horzLines: { color: "#1a1a1a" } },
+      timeScale: { timeVisible: true, borderColor: "#1a1a1a" },
       crosshair: { mode: 0 },
     });
     chartRef.current = chart;
 
     const candleSeries = chart.addCandlestickSeries({
-      upColor: "#22c55e",
-      downColor: "#ef4444",
+      upColor: "#5a9a6e",
+      downColor: "#c4605a",
       borderVisible: false,
-      wickUpColor: "#22c55e",
-      wickDownColor: "#ef4444",
+      wickUpColor: "#5a9a6e",
+      wickDownColor: "#c4605a",
     });
 
     // Fetch data
@@ -90,7 +90,7 @@ export default function ChartPage({ params }: { params: { symbol: string } }) {
           m.push({
             time: Math.floor(new Date(t.entry_timestamp).getTime() / 1000),
             position: t.direction === "buy" ? "belowBar" : "aboveBar",
-            color: t.direction === "buy" ? "#22c55e" : "#ef4444",
+            color: t.direction === "buy" ? "#5a9a6e" : "#c4605a",
             shape: t.direction === "buy" ? "arrowUp" : "arrowDown",
             text: `${t.direction.toUpperCase()} ${t.position_size}`,
           });
@@ -98,7 +98,7 @@ export default function ChartPage({ params }: { params: { symbol: string } }) {
             m.push({
               time: Math.floor(new Date(t.exit_timestamp).getTime() / 1000),
               position: t.direction === "buy" ? "aboveBar" : "belowBar",
-              color: "#6366f1",
+              color: "#ffffff",
               shape: "circle",
               text: t.pnl != null ? `$${t.pnl.toFixed(2)}` : "Exit",
             });
@@ -114,7 +114,7 @@ export default function ChartPage({ params }: { params: { symbol: string } }) {
         for (const t of tradeData.slice(-5)) {
           if (t.stop_loss) {
             const slLine = chart.addLineSeries({
-              color: "#ef4444",
+              color: "#c4605a",
               lineWidth: 1,
               lineStyle: 2,
               priceLineVisible: false,
@@ -131,7 +131,7 @@ export default function ChartPage({ params }: { params: { symbol: string } }) {
           }
           if (t.take_profit) {
             const tpLine = chart.addLineSeries({
-              color: "#22c55e",
+              color: "#5a9a6e",
               lineWidth: 1,
               lineStyle: 2,
               priceLineVisible: false,
@@ -184,7 +184,7 @@ export default function ChartPage({ params }: { params: { symbol: string } }) {
               onClick={() => setTimeframe(tf.value as Timeframe)}
               className={`px-3 py-1.5 text-sm font-medium transition-colors ${
                 timeframe === tf.value
-                  ? "bg-accent text-white"
+                  ? "bg-accent text-black"
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >

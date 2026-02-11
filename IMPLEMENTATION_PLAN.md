@@ -4,7 +4,7 @@
 > **Stack:** Next.js 14 + Self-hosted Supabase + Python MT5 Workers
 > **Host:** Hostinger KVM2 (2 vCPU, 8GB RAM, 100GB NVMe, Ubuntu 22.04)
 > **Created:** February 8, 2026
-> **Updated:** February 10, 2026
+> **Updated:** February 11, 2026
 
 ---
 
@@ -18,7 +18,7 @@
 - ✅ **Phase 6** — Analytics & Charts (metrics calculations, TradingView charts)
 - ✅ **Phase 7** — Journaling System (trade notes, tags, screenshots)
 - ⬜ **Phase 8** — Payments & Subscriptions (Stripe integration)
-- ⬜ **Phase 9** — Polish & Optimization (UI refinements, performance)
+- 🔄 **Phase 9** — Polish & Optimization (UI redesign ✅, performance tuning pending)
 - ⬜ **Phase 10** — Testing & Launch (E2E tests, production deployment)
 
 ---
@@ -35,7 +35,7 @@
 8. [Phase 6 — Analytics & Charts](#phase-6--analytics--charts) ✅
 9. [Phase 7 — Journaling System](#phase-7--journaling-system) ✅
 10. [Phase 8 — Payments & Subscriptions](#phase-8--payments--subscriptions)
-11. [Phase 9 — Polish & Optimization](#phase-9--polish--optimization)
+11. [Phase 9 — Polish & Optimization](#phase-9--polish--optimization) 🔄
 12. [Phase 10 — Testing & Launch](#phase-10--testing--launch)
 13. [Verification Checklist](#verification-checklist)
 14. [Cost Summary](#cost-summary)
@@ -175,7 +175,9 @@ These rules must be followed throughout all phases. Do NOT deviate.
 - [ ] Stripe for payments. Webhook verification on all events
 
 ### R6 — UI/UX
-- [ ] Dark mode ONLY (no light mode toggle)
+- [x] Dark mode ONLY (no light mode toggle)
+- [x] Black & white monochrome theme: `#000000` black, `#ffffff` white accent, muted profit/loss colors (`#5a9a6e` green, `#c4605a` red)
+- [x] Landing page: animated wireframe globe hero with tubelight navigation
 - [ ] Responsive: desktop + mobile browsers
 - [ ] Charts: TradingView Lightweight Charts (open source, free)
 - [ ] Chart timeframes: 30m, 1H, 4H, Daily, Weekly
@@ -1992,7 +1994,51 @@ CREATE TRIGGER update_journals_timestamp BEFORE UPDATE ON public.journals
 - [ ] Disk space alerts: cron job to check, alert if >80%
 - [ ] PostgreSQL slow query log: log queries >500ms
 
+### Step 9.6 — Landing Page & Brand Identity Redesign ✅
+- [x] **Landing Page Overhaul**:
+  - Created animated wireframe globe as hero centerpiece (pure CSS, no framer-motion)
+  - Globe features: mathematically correct latitude rings (0°, ±25°, ±50°), longitude meridians, orbit dots traveling on wireframe paths
+  - Subtle warm gradient background replacing flat dark
+  - Floating stat cards with glassmorphism effect
+  - Feature cards grid with hover states
+- [x] **Tubelight Navigation**:
+  - Integrated shadcn-inspired tubelight-navbar component (CSS-only sliding lamp indicator)
+  - Fixed positioning with backdrop blur
+  - Mobile responsive (icons on mobile, labels on desktop)
+  - Items: Home, Features, Journal, FAQ
+- [x] **Black & White Theme Transformation**:
+  - Complete monochrome color palette: `background: #000000`, `accent: #ffffff`, `text: #e5e5e5/#737373`
+  - Profit/loss colors muted: `#5a9a6e` (green), `#c4605a` (red)
+  - Fixed all `bg-accent text-white` patterns → `bg-accent text-black` (9 files)
+  - Updated all chart components:
+    - Equity curve: muted gradient fills
+    - PnL bar chart: muted bar colors
+    - Calendar heatmap: muted heat scale
+    - TradingView charts: muted candles, B&W background/grid/axes
+    - Chart tooltips/axes: B&W styling
+  - Updated trade markers: entry arrows (muted colors), exit circles (white)
+  - Session tag colors preserved for visual distinction
+- [x] **Component Library Extensions**:
+  - Created `@/lib/utils.ts` re-export of `cn` utility
+  - `tubelight-navbar.tsx`: CSS-only sliding lamp with measured tab positioning
+  - `expandable-tabs.tsx`: CSS max-width transitions (not used in current build)
+  - `globe-nav.tsx`: Navigation wrapper with lucide-react icons
+- [x] **Globe Wireframe Improvements**:
+  - Proper spherical geometry: `rotateX(90deg) + translateZ(R × sin(θ))`
+  - Ring diameters scaled correctly: `cos(θ) × 100%`
+  - Trade route arcs as full great circles (all lines connect through sphere)
+  - Orbit animations match arc transforms exactly
+  - Responsive globe sizing via CSS variables (`--globe-size`, `--globe-r`)
+
 ### ✅ Phase 9 Verification
+- [x] Landing page loads with animated globe, no flash of white
+- [x] Tubelight navbar: sliding lamp animation smooth, no layout shift
+- [x] Globe wireframe: latitude rings properly spaced, meridians intersect correctly
+- [x] Black & white theme: no purple/indigo artifacts remaining
+- [x] All buttons readable: white buttons have black text
+- [x] Charts: profit/loss colors muted, no bright red/green
+- [x] TradingView candles: muted colors, B&W grid
+- [x] Calendar heatmap legend matches color scale
 - [ ] Lighthouse score: >80 on mobile
 - [ ] All pages load in <2s on simulated slow 3G
 - [ ] No console errors in production build

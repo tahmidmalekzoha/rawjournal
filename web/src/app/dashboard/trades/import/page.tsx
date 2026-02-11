@@ -211,7 +211,7 @@ export default function ImportTradesPage() {
           <button
             onClick={handleImport}
             disabled={importing}
-            className="w-full rounded-lg bg-accent py-3 font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
+            className="w-full rounded-lg bg-accent py-3 font-medium text-black transition-colors hover:bg-accent-hover disabled:opacity-50"
           >
             {importing ? `Importing...` : `Import ${parseResult.rows.length} Trades`}
           </button>
@@ -238,7 +238,7 @@ export default function ImportTradesPage() {
           </div>
           <button
             onClick={() => router.push("/dashboard/trades")}
-            className="rounded-lg bg-accent px-6 py-2.5 font-medium text-white transition-colors hover:bg-accent-hover"
+            className="rounded-lg bg-accent px-6 py-2.5 font-medium text-black transition-colors hover:bg-accent-hover"
           >
             View Trades
           </button>

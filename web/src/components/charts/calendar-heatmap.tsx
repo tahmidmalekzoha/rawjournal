@@ -8,11 +8,11 @@ interface Props {
 }
 
 function getColor(pnl: number): string {
-  if (pnl > 100) return "#16a34a";      // dark green
-  if (pnl > 0) return "#22c55e40";      // light green
-  if (pnl === 0) return "#1e1e2e";      // gray
-  if (pnl > -100) return "#ef444440";   // light red
-  return "#dc2626";                       // dark red
+  if (pnl > 100) return "#5a9a6e";       // muted green
+  if (pnl > 0) return "#5a9a6e40";       // light muted green
+  if (pnl === 0) return "#1a1a1a";       // neutral
+  if (pnl > -100) return "#c4605a40";    // light muted red
+  return "#c4605a";                        // muted red
 }
 
 export default function CalendarHeatmap({ data }: Props) {
@@ -51,7 +51,7 @@ export default function CalendarHeatmap({ data }: Props) {
                   key={key}
                   title={entry ? `${key}: $${entry.pnl.toFixed(2)} (${entry.trades} trades)` : key}
                   className="h-3.5 w-3.5 rounded-sm"
-                  style={{ backgroundColor: entry ? getColor(entry.pnl) : "#1e1e2e" }}
+                  style={{ backgroundColor: entry ? getColor(entry.pnl) : "#1a1a1a" }}
                 />
               );
             })}
@@ -61,11 +61,11 @@ export default function CalendarHeatmap({ data }: Props) {
       {/* Legend */}
       <div className="mt-3 flex items-center gap-2 text-xs text-text-secondary">
         <span>Loss</span>
-        <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: "#dc2626" }} />
-        <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: "#ef444440" }} />
-        <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: "#1e1e2e" }} />
-        <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: "#22c55e40" }} />
-        <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: "#16a34a" }} />
+        <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: "#c4605a" }} />
+        <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: "#c4605a40" }} />
+        <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: "#1a1a1a" }} />
+        <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: "#5a9a6e40" }} />
+        <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: "#5a9a6e" }} />
         <span>Profit</span>
       </div>
     </div>

@@ -76,7 +76,7 @@ export default function TagsSettingsPage() {
             />
           ))}
         </div>
-        <button onClick={addTag} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover">
+        <button onClick={addTag} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-hover">
           Add
         </button>
       </div>

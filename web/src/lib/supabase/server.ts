@@ -1,7 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createMockClient } from "./mock-client";
 
 export function createClient() {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true") {
+    return createMockClient() as any;
+  }
+
   const cookieStore = cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

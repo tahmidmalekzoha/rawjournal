@@ -65,7 +65,7 @@ export default function AnalyticsPage() {
                 onClick={() => setPeriod(p.value)}
                 className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                   period === p.value
-                    ? "bg-accent text-white"
+                    ? "bg-accent text-black"
                     : "text-text-secondary hover:text-text-primary"
                 }`}
               >
