@@ -32,8 +32,8 @@ RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Install native Python dependencies (mt5linux bridges to Wine rpyc)
-COPY sync-engine/requirements.txt /opt/sync-engine/requirements.txt
-RUN pip install --no-cache-dir -r /opt/sync-engine/requirements.txt
+COPY sync-engine/requirements-worker.txt /opt/sync-engine/requirements-worker.txt
+RUN pip install --no-cache-dir -r /opt/sync-engine/requirements-worker.txt
 
 # Download Windows Python 3.11 installer (installed into Wine prefix at first run)
 RUN wget -q -O /opt/wine-python/python-installer.exe \

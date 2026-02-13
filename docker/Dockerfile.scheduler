@@ -3,8 +3,8 @@ FROM python:3.11-slim
 
 RUN mkdir -p /opt/sync-engine /var/log/rawjournal
 
-COPY sync-engine/requirements.txt /opt/sync-engine/requirements.txt
-RUN pip install --no-cache-dir -r /opt/sync-engine/requirements.txt
+COPY sync-engine/requirements-scheduler.txt /opt/sync-engine/requirements-scheduler.txt
+RUN pip install --no-cache-dir -r /opt/sync-engine/requirements-scheduler.txt
 
 COPY sync-engine/ /opt/sync-engine/
 
