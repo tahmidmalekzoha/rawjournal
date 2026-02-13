@@ -10,8 +10,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - SUPABASE_URL=http://supabasekong-nock088o84k4g4g44k8wsoos.72.61.251.154.sslip.io
+      - SUPABASE_SERVICE_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc3MDc5MjcyMCwiZXhwIjo0OTI2NDY2MzIwLCJyb2xlIjoic2VydmljZV9yb2xlIn0.B3evuN50VCz-r_DgjtZJoqCNFGhlYITgs_9TPuSnCZ0
       - REDIS_URL=redis://redis:6379
     depends_on:
       redis:
