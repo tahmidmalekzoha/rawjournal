@@ -5,7 +5,7 @@
 services:
   scheduler:
     build:
-      context: ../
+      context: .
       dockerfile: docker/Dockerfile.scheduler
     ports:
       - "8080:8080"
@@ -30,7 +30,7 @@ services:
 
   worker-1:
     build:
-      context: ../
+      context: .
       dockerfile: docker/Dockerfile.worker
     environment:
       - WORKER_ID=1
@@ -58,7 +58,7 @@ services:
 
   worker-2:
     build:
-      context: ../
+      context: .
       dockerfile: docker/Dockerfile.worker
     environment:
       - WORKER_ID=2
@@ -86,7 +86,7 @@ services:
 
   worker-3:
     build:
-      context: ../
+      context: .
       dockerfile: docker/Dockerfile.worker
     environment:
       - WORKER_ID=3
@@ -114,7 +114,7 @@ services:
 
   worker-4:
     build:
-      context: ../
+      context: .
       dockerfile: docker/Dockerfile.worker
     environment:
       - WORKER_ID=4
