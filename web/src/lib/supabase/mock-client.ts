@@ -5,6 +5,7 @@ import {
   mockOpenPositions,
   mockJournals,
   mockTags,
+  mockCandles,
   MOCK_USER_ID,
 } from "@/lib/mock-data";
 import type { Trade, Journal, Tag, OpenPosition } from "@/types";
@@ -17,7 +18,7 @@ const store: Record<string, any[]> = {
   open_positions: [...mockOpenPositions],
   journals: [...mockJournals],
   tags: [...mockTags],
-  candle_cache: [],
+  candle_cache: [...mockCandles],
   hot_symbols: [],
   analytics_cache: [],
 };

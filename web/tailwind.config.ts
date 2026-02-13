@@ -20,6 +20,7 @@ const config: Config = {
         foreground: "#e5e5e5",
         "muted-foreground": "#737373",
         primary: "#ffffff",
+        "primary-foreground": "#000000",
       },
     },
   },

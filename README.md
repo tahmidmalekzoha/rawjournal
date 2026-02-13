@@ -25,9 +25,11 @@
 
 ## Deployment
 
-Deploy via **Coolify**:
-1. Supabase (one-click service) → `api.rawjournal.pro`
-2. Next.js (Git repo, `web/` path) → `rawjournal.pro`
-3. Docker Compose (`docker/docker-compose.yml`) → Workers + Redis
+**Full step-by-step guide:** See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
 
-Environment variables: Copy `.env.example` files and fill in values.
+**Quick overview:**
+1. **Supabase** (Coolify one-click service) → `api.rawjournal.pro`
+2. **Next.js** (Coolify Git resource, `web/` path) → `rawjournal.pro`
+3. **MT5 Workers** (Docker Compose or Coolify resource) → `ws.rawjournal.pro`
+
+Environment variables: Copy `.env.example` and fill in real values.

@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { formatDateTime, formatCurrency, cn } from "@/lib/utils/format";
-import { MOODS, SESSIONS } from "@/lib/constants";
+import { MOODS } from "@/lib/constants";
+import { BookOpen, Search, X } from "lucide-react";
 import type { Journal, Trade } from "@/types";
 
 interface JournalEntry extends Journal {
@@ -26,14 +27,14 @@ export default function JournalListPage() {
         .select("*, trade:trades(*)")
         .order("created_at", { ascending: false });
 
-      setEntries((journals as any) || []);
+      setEntries(((journals as any) || []).filter((j: any) => j.trade));
       setLoading(false);
     }
     load();
   }, []);
 
-  // Collect all used tags
   const allTags = [...new Set(entries.flatMap((e) => e.tags))];
+  const hasFilters = search || tagFilter || moodFilter;
 
   const filtered = entries.filter((e) => {
     if (search && !e.notes?.toLowerCase().includes(search.toLowerCase())) return false;
@@ -42,21 +43,24 @@ export default function JournalListPage() {
     return true;
   });
 
-  if (loading) return <div className="py-12 text-center text-text-secondary">Loading journal...</div>;
+  if (loading) return <div className="py-12 text-center text-sm text-text-secondary">Loading journal...</div>;
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold">Journal</h1>
+      <h1 className="text-2xl font-bold text-text-primary">Journal</h1>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <input
-          type="text"
-          placeholder="Search notes..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="input-sm w-48"
-        />
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-secondary" />
+          <input
+            type="text"
+            placeholder="Search notes..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input-sm w-48 pl-8"
+          />
+        </div>
         <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)} className="input-sm">
           <option value="">All Tags</option>
           {allTags.map((t) => (
@@ -69,14 +73,28 @@ export default function JournalListPage() {
             <option key={m.value} value={m.value}>{m.emoji} {m.label}</option>
           ))}
         </select>
+        {hasFilters && (
+          <button
+            onClick={() => { setSearch(""); setTagFilter(""); setMoodFilter(""); }}
+            className="inline-flex items-center gap-1 text-xs text-text-secondary transition-colors hover:text-text-primary"
+          >
+            <X className="h-3 w-3" /> Clear
+          </button>
+        )}
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-border bg-surface p-12 text-center text-text-secondary">
-          {entries.length === 0 ? "No journal entries yet. Add notes to your trades." : "No entries match filters."}
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface p-16 text-center">
+          <BookOpen className="mb-3 h-8 w-8 text-text-secondary/40" />
+          <p className="text-sm text-text-secondary">
+            {entries.length === 0 ? "No journal entries yet." : "No entries match filters."}
+          </p>
+          {entries.length === 0 && (
+            <p className="mt-1 text-xs text-text-secondary/60">Add notes to your trades to start journaling.</p>
+          )}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {filtered.map((entry) => {
             const moodInfo = MOODS.find((m) => m.value === entry.mood);
             const trade = entry.trade;
@@ -89,12 +107,12 @@ export default function JournalListPage() {
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <span className="font-medium">{trade?.symbol}</span>
+                    <span className="font-medium text-text-primary">{trade?.symbol}</span>
                     <span className={cn("text-xs font-medium", trade?.direction === "buy" ? "text-profit" : "text-loss")}>
                       {trade?.direction?.toUpperCase()}
                     </span>
                     {trade?.pnl != null && (
-                      <span className={cn("font-medium", trade.pnl >= 0 ? "text-profit" : "text-loss")}>
+                      <span className={cn("font-medium tabular-nums", trade.pnl >= 0 ? "text-profit" : "text-loss")}>
                         {formatCurrency(trade.pnl)}
                       </span>
                     )}
@@ -115,14 +133,14 @@ export default function JournalListPage() {
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   {entry.tags.map((tag) => (
-                    <span key={tag} className="rounded-full bg-accent/10 px-2 py-0.5 text-xs text-accent">
+                    <span key={tag} className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs text-text-secondary">
                       {tag}
                     </span>
                   ))}
                   {entry.screenshot_urls.length > 0 && (
                     <span className="text-xs text-text-secondary">📷 {entry.screenshot_urls.length}</span>
                   )}
-                  <span className="ml-auto text-xs text-text-secondary">
+                  <span className="ml-auto text-xs text-text-secondary/60">
                     {trade?.exit_timestamp ? formatDateTime(trade.exit_timestamp) : formatDateTime(trade?.entry_timestamp || entry.created_at)}
                   </span>
                 </div>

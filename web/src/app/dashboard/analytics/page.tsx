@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { formatCurrency, formatPercent } from "@/lib/utils/format";
+import { formatCurrency, formatPercent, cn } from "@/lib/utils/format";
+import { BarChart3 } from "lucide-react";
 import type { AnalyticsData, AnalyticsPeriod, Account } from "@/types";
 import EquityCurve from "@/components/charts/equity-curve";
 import CalendarHeatmap from "@/components/charts/calendar-heatmap";
@@ -11,10 +12,10 @@ import SessionBreakdown from "@/components/charts/session-breakdown";
 
 const PERIODS: { value: AnalyticsPeriod; label: string }[] = [
   { value: "today", label: "Today" },
-  { value: "week", label: "This Week" },
-  { value: "month", label: "This Month" },
-  { value: "year", label: "This Year" },
-  { value: "all", label: "All Time" },
+  { value: "week", label: "Week" },
+  { value: "month", label: "Month" },
+  { value: "year", label: "Year" },
+  { value: "all", label: "All" },
 ];
 
 export default function AnalyticsPage() {
@@ -42,16 +43,17 @@ export default function AnalyticsPage() {
   }, [accountId, period]);
 
   if (loading && !analytics) {
-    return <div className="py-12 text-center text-text-secondary">Loading analytics...</div>;
+    return <div className="py-12 text-center text-sm text-text-secondary">Loading analytics...</div>;
   }
 
   const a = analytics;
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Analytics</h1>
-        <div className="flex gap-2">
+        <h1 className="text-2xl font-bold text-text-primary">Analytics</h1>
+        <div className="flex items-center gap-2">
           <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className="input-sm">
             <option value="">All Accounts</option>
             {accounts.map((ac) => (
@@ -63,11 +65,12 @@ export default function AnalyticsPage() {
               <button
                 key={p.value}
                 onClick={() => setPeriod(p.value)}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium transition-colors first:rounded-l-lg last:rounded-r-lg",
                   period === p.value
                     ? "bg-accent text-black"
                     : "text-text-secondary hover:text-text-primary"
-                }`}
+                )}
               >
                 {p.label}
               </button>
@@ -77,75 +80,73 @@ export default function AnalyticsPage() {
       </div>
 
       {!a || a.total_trades === 0 ? (
-        <div className="rounded-xl border border-border bg-surface p-12 text-center text-text-secondary">
-          No closed trades for this period. Start adding trades to see analytics.
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface p-16 text-center">
+          <BarChart3 className="mb-3 h-8 w-8 text-text-secondary/40" />
+          <p className="text-sm text-text-secondary">No closed trades for this period.</p>
+          <p className="mt-1 text-xs text-text-secondary/60">Start adding trades to see analytics.</p>
         </div>
       ) : (
         <>
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <StatCard label="Total P&L" value={formatCurrency(a.total_pnl)} color={a.total_pnl >= 0 ? "text-profit" : "text-loss"} />
             <StatCard label="Win Rate" value={formatPercent(a.win_rate)} color={a.win_rate >= 50 ? "text-profit" : "text-loss"} />
             <StatCard label="Profit Factor" value={a.profit_factor === Infinity ? "∞" : a.profit_factor.toFixed(2)} color={a.profit_factor >= 1 ? "text-profit" : "text-loss"} />
             <StatCard label="Total Trades" value={a.total_trades.toString()} />
+            <StatCard label="Max Drawdown" value={formatCurrency(a.max_drawdown)} color="text-loss" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <StatCard label="Avg Win" value={formatCurrency(a.avg_win)} color="text-profit" />
             <StatCard label="Avg Loss" value={formatCurrency(a.avg_loss)} color="text-loss" />
             <StatCard label="Largest Win" value={formatCurrency(a.largest_win)} color="text-profit" />
             <StatCard label="Largest Loss" value={formatCurrency(a.largest_loss)} color="text-loss" />
-            <StatCard label="Max Drawdown" value={formatCurrency(a.max_drawdown)} color="text-loss" />
             <StatCard label="Consec. Wins" value={a.consecutive_wins.toString()} />
           </div>
 
           {/* Equity Curve */}
           {a.equity_curve.length > 0 && (
-            <div className="rounded-xl border border-border bg-surface p-5">
-              <h2 className="mb-4 font-semibold">Equity Curve</h2>
+            <ChartCard title="Equity Curve">
               <EquityCurve data={a.equity_curve} />
-            </div>
+            </ChartCard>
           )}
 
           {/* Calendar Heatmap */}
           {a.daily_pnl.length > 0 && (
-            <div className="rounded-xl border border-border bg-surface p-5">
-              <h2 className="mb-4 font-semibold">Daily P&L Calendar</h2>
+            <ChartCard title="Daily P&L Calendar">
               <CalendarHeatmap data={a.daily_pnl} />
-            </div>
+            </ChartCard>
           )}
 
           {/* Charts row */}
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             {a.by_symbol.length > 0 && (
-              <div className="rounded-xl border border-border bg-surface p-5">
-                <h2 className="mb-4 font-semibold">P&L by Symbol</h2>
+              <ChartCard title="P&L by Symbol">
                 <PnlBarChart data={a.by_symbol.map((s) => ({ name: s.symbol, pnl: s.pnl }))} />
-              </div>
+              </ChartCard>
             )}
             {a.by_session.length > 0 && (
-              <div className="rounded-xl border border-border bg-surface p-5">
-                <h2 className="mb-4 font-semibold">P&L by Session</h2>
+              <ChartCard title="P&L by Session">
                 <PnlBarChart data={a.by_session.map((s) => ({ name: s.session, pnl: s.pnl }))} />
-              </div>
+              </ChartCard>
             )}
             {a.by_day_of_week.length > 0 && (
-              <div className="rounded-xl border border-border bg-surface p-5">
-                <h2 className="mb-4 font-semibold">P&L by Day of Week</h2>
+              <ChartCard title="P&L by Day of Week">
                 <PnlBarChart data={a.by_day_of_week.map((d) => ({ name: d.day, pnl: d.pnl }))} />
-              </div>
+              </ChartCard>
             )}
             {a.by_hour.length > 0 && (
-              <div className="rounded-xl border border-border bg-surface p-5">
-                <h2 className="mb-4 font-semibold">P&L by Hour (UTC)</h2>
+              <ChartCard title="P&L by Hour (UTC)">
                 <PnlBarChart data={a.by_hour.map((h) => ({ name: `${h.hour}:00`, pnl: h.pnl }))} />
-              </div>
+              </ChartCard>
             )}
           </div>
 
           {/* Session Breakdown */}
           {a.by_session.length > 0 && (
-            <div className="rounded-xl border border-border bg-surface p-5">
-              <h2 className="mb-4 font-semibold">Session Performance</h2>
+            <ChartCard title="Session Performance">
               <SessionBreakdown data={a.by_session} />
-            </div>
+            </ChartCard>
           )}
         </>
       )}
@@ -156,8 +157,17 @@ export default function AnalyticsPage() {
 function StatCard({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
     <div className="rounded-xl border border-border bg-surface p-4">
-      <p className="text-xs text-text-secondary">{label}</p>
-      <p className={`mt-1 text-xl font-bold ${color || ""}`}>{value}</p>
+      <p className="text-[10px] font-medium uppercase tracking-wider text-text-secondary">{label}</p>
+      <p className={cn("mt-1 text-lg font-bold tabular-nums", color)}>{value}</p>
+    </div>
+  );
+}
+
+function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border bg-surface p-5">
+      <h2 className="mb-4 text-xs font-medium uppercase tracking-wider text-text-secondary">{title}</h2>
+      {children}
     </div>
   );
 }

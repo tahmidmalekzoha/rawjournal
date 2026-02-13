@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createChart, type IChartApi } from "lightweight-charts";
+import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
+import { cn } from "@/lib/utils/format";
 import { TIMEFRAMES } from "@/lib/constants";
 import type { Timeframe } from "@/types";
 
@@ -40,7 +41,6 @@ export default function ChartPage({ params }: { params: { symbol: string } }) {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Cleanup previous chart
     if (chartRef.current) {
       chartRef.current.remove();
       chartRef.current = null;
@@ -64,7 +64,6 @@ export default function ChartPage({ params }: { params: { symbol: string } }) {
       wickDownColor: "#c4605a",
     });
 
-    // Fetch data
     setLoading(true);
     fetch(`/api/charts/${symbol}?timeframe=${timeframe}`)
       .then((r) => r.json())
@@ -81,7 +80,6 @@ export default function ChartPage({ params }: { params: { symbol: string } }) {
           candleSeries.setData(candles);
         }
 
-        // Trade markers
         const tradeData = data.trades || [];
         setTrades(tradeData);
 
@@ -110,7 +108,6 @@ export default function ChartPage({ params }: { params: { symbol: string } }) {
           candleSeries.setMarkers(markers);
         }
 
-        // SL/TP lines for recent trades
         for (const t of tradeData.slice(-5)) {
           if (t.stop_loss) {
             const slLine = chart.addLineSeries({
@@ -153,7 +150,6 @@ export default function ChartPage({ params }: { params: { symbol: string } }) {
       })
       .catch(() => setLoading(false));
 
-    // Resize handler
     function onResize() {
       if (containerRef.current && chartRef.current) {
         chartRef.current.applyOptions({ width: containerRef.current.clientWidth });
@@ -170,23 +166,28 @@ export default function ChartPage({ params }: { params: { symbol: string } }) {
 
   return (
     <div className="space-y-4">
+      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard/trades" className="text-sm text-text-secondary hover:text-text-primary">
-            &larr; Trades
+        <div>
+          <Link
+            href="/dashboard/trades"
+            className="mb-2 inline-flex items-center gap-1.5 text-sm text-text-secondary transition-colors hover:text-text-primary"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to trades
           </Link>
-          <h1 className="text-2xl font-bold">{symbol}</h1>
+          <h1 className="text-2xl font-bold text-text-primary">{symbol}</h1>
         </div>
         <div className="flex rounded-lg border border-border">
           {TIMEFRAMES.map((tf) => (
             <button
               key={tf.value}
               onClick={() => setTimeframe(tf.value as Timeframe)}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={cn(
+                "px-3 py-1.5 text-xs font-medium transition-colors first:rounded-l-lg last:rounded-r-lg",
                 timeframe === tf.value
                   ? "bg-accent text-black"
                   : "text-text-secondary hover:text-text-primary"
-              }`}
+              )}
             >
               {tf.label}
             </button>
@@ -194,29 +195,36 @@ export default function ChartPage({ params }: { params: { symbol: string } }) {
         </div>
       </div>
 
-      {loading && <div className="py-4 text-center text-text-secondary text-sm">Loading chart data...</div>}
+      {loading && <div className="py-4 text-center text-sm text-text-secondary">Loading chart data...</div>}
 
       <div ref={containerRef} className="rounded-xl border border-border overflow-hidden" />
 
-      {/* Trade list for this symbol */}
+      {/* Trade list */}
       {trades.length > 0 && (
         <div className="rounded-xl border border-border bg-surface p-4">
-          <h2 className="mb-3 font-semibold">Trades on {symbol}</h2>
-          <div className="space-y-2">
+          <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-text-secondary">
+            Trades on {symbol}
+          </h2>
+          <div className="space-y-1.5">
             {trades.slice(-10).reverse().map((t) => (
               <Link
                 key={t.id}
                 href={`/dashboard/trades/${t.id}`}
-                className="flex items-center justify-between rounded-lg border border-border p-3 hover:bg-surface-hover"
+                className="flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-surface-hover"
               >
                 <div className="flex items-center gap-3">
-                  <span className={t.direction === "buy" ? "text-profit" : "text-loss"}>
+                  {t.direction === "buy" ? (
+                    <TrendingUp className="h-3.5 w-3.5 text-profit" />
+                  ) : (
+                    <TrendingDown className="h-3.5 w-3.5 text-loss" />
+                  )}
+                  <span className={cn("text-sm font-medium", t.direction === "buy" ? "text-profit" : "text-loss")}>
                     {t.direction.toUpperCase()}
                   </span>
-                  <span className="text-sm text-text-secondary">{t.position_size} lots</span>
+                  <span className="text-xs text-text-secondary">{t.position_size} lots</span>
                 </div>
                 {t.pnl != null && (
-                  <span className={`font-medium ${t.pnl >= 0 ? "text-profit" : "text-loss"}`}>
+                  <span className={cn("text-sm font-medium tabular-nums", t.pnl >= 0 ? "text-profit" : "text-loss")}>
                     ${t.pnl.toFixed(2)}
                   </span>
                 )}

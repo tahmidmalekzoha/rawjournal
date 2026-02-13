@@ -13,9 +13,9 @@ import time
 from datetime import datetime, timedelta
 
 import redis.asyncio as aioredis
-import MetaTrader5 as mt5
 
 import config
+from mt5_bridge import mt5
 import database as db
 from encryption import decrypt
 from models import TradeRecord, OpenPosition

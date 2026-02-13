@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { calculatePnl } from "@/lib/utils/calculations";
 import { FOREX_PAIRS, FREE_TIER_TRADE_LIMIT } from "@/lib/constants";
+import { ArrowLeft, TrendingUp, TrendingDown, Info } from "lucide-react";
+import { cn } from "@/lib/utils/format";
 import type { Account, Profile } from "@/types";
 
 export default function AddTradePage() {
@@ -47,7 +50,6 @@ export default function AddTradePage() {
     p.toLowerCase().includes(symbolSearch.toLowerCase())
   );
 
-  // Auto-calculate P&L
   const autoCalc = form.exit_price && form.entry_price && form.symbol
     ? calculatePnl(
         form.direction,
@@ -67,7 +69,6 @@ export default function AddTradePage() {
     if (!form.entry_price) { setError("Enter an entry price"); return; }
     if (!form.entry_timestamp) { setError("Enter entry date/time"); return; }
 
-    // Free tier check
     if (profile?.subscription_tier === "free") {
       if ((profile.trade_count_this_month || 0) >= FREE_TIER_TRADE_LIMIT) {
         setError(`Free tier limit: ${FREE_TIER_TRADE_LIMIT} trades/month. Upgrade to add more.`);
@@ -109,7 +110,6 @@ export default function AddTradePage() {
       return;
     }
 
-    // Increment trade count for free tier
     if (profile?.subscription_tier === "free") {
       await supabase
         .from("profiles")
@@ -122,15 +122,22 @@ export default function AddTradePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Add Trade</h1>
-        <button onClick={() => router.back()} className="text-sm text-text-secondary hover:text-text-primary">
-          Cancel
-        </button>
+        <div>
+          <Link
+            href="/dashboard/trades"
+            className="mb-2 inline-flex items-center gap-1.5 text-sm text-text-secondary transition-colors hover:text-text-primary"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to trades
+          </Link>
+          <h1 className="text-2xl font-bold text-text-primary">Add Trade</h1>
+        </div>
       </div>
 
       {profile?.subscription_tier === "free" && (
-        <div className="rounded-lg border border-border bg-surface p-3 text-sm text-text-secondary">
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-text-secondary">
+          <Info className="h-4 w-4 shrink-0" />
           Free tier: {(profile.trade_count_this_month || 0)}/{FREE_TIER_TRADE_LIMIT} trades this month
         </div>
       )}
@@ -167,12 +174,12 @@ export default function AddTradePage() {
             />
             {showSymbols && filteredPairs.length > 0 && (
               <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg">
-                {filteredPairs.slice(0, 10).map((p) => (
+                {filteredPairs.slice(0, 8).map((p) => (
                   <button
                     key={p}
                     type="button"
                     onMouseDown={() => { setForm({ ...form, symbol: p }); setSymbolSearch(""); setShowSymbols(false); }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-surface-hover"
+                    className="w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-surface-hover transition-colors"
                   >
                     {p}
                   </button>
@@ -184,26 +191,30 @@ export default function AddTradePage() {
 
         {/* Direction */}
         <Field label="Direction">
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {(["buy", "sell"] as const).map((d) => (
               <button
                 key={d}
                 type="button"
                 onClick={() => setForm({ ...form, direction: d })}
-                className={`flex-1 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-lg border py-2.5 text-sm font-medium transition-all",
                   form.direction === d
-                    ? d === "buy" ? "border-profit bg-profit/10 text-profit" : "border-loss bg-loss/10 text-loss"
+                    ? d === "buy"
+                      ? "border-profit bg-profit/10 text-profit"
+                      : "border-loss bg-loss/10 text-loss"
                     : "border-border text-text-secondary hover:bg-surface-hover"
-                }`}
+                )}
               >
-                {d.toUpperCase()}
+                {d === "buy" ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                {d === "buy" ? "Long" : "Short"}
               </button>
             ))}
           </div>
         </Field>
 
-        {/* Entry/Exit datetime */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Timestamps */}
+        <div className="grid grid-cols-2 gap-3">
           <Field label="Entry Date/Time">
             <input
               type="datetime-local"
@@ -213,7 +224,7 @@ export default function AddTradePage() {
               className="input"
             />
           </Field>
-          <Field label="Exit Date/Time (optional)">
+          <Field label="Exit Date/Time" optional>
             <input
               type="datetime-local"
               value={form.exit_timestamp}
@@ -223,114 +234,83 @@ export default function AddTradePage() {
           </Field>
         </div>
 
-        {/* Entry/Exit price */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Prices */}
+        <div className="grid grid-cols-2 gap-3">
           <Field label="Entry Price">
-            <input
-              type="number"
-              step="any"
-              value={form.entry_price}
-              onChange={(e) => setForm({ ...form, entry_price: e.target.value })}
-              required
-              className="input"
-            />
+            <input type="number" step="any" value={form.entry_price} onChange={(e) => setForm({ ...form, entry_price: e.target.value })} required className="input tabular-nums" />
           </Field>
-          <Field label="Exit Price (optional)">
-            <input
-              type="number"
-              step="any"
-              value={form.exit_price}
-              onChange={(e) => setForm({ ...form, exit_price: e.target.value })}
-              className="input"
-            />
+          <Field label="Exit Price" optional>
+            <input type="number" step="any" value={form.exit_price} onChange={(e) => setForm({ ...form, exit_price: e.target.value })} className="input tabular-nums" />
           </Field>
         </div>
 
         {/* Lot size */}
         <Field label="Lot Size">
-          <input
-            type="number"
-            step="0.01"
-            min="0.01"
-            max="100"
-            value={form.position_size}
-            onChange={(e) => setForm({ ...form, position_size: e.target.value })}
-            className="input"
-          />
+          <input type="number" step="0.01" min="0.01" max="100" value={form.position_size} onChange={(e) => setForm({ ...form, position_size: e.target.value })} className="input tabular-nums" />
         </Field>
 
         {/* SL / TP */}
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Stop Loss (optional)">
-            <input
-              type="number"
-              step="any"
-              value={form.stop_loss}
-              onChange={(e) => setForm({ ...form, stop_loss: e.target.value })}
-              className="input"
-            />
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Stop Loss" optional>
+            <input type="number" step="any" value={form.stop_loss} onChange={(e) => setForm({ ...form, stop_loss: e.target.value })} className="input tabular-nums" />
           </Field>
-          <Field label="Take Profit (optional)">
-            <input
-              type="number"
-              step="any"
-              value={form.take_profit}
-              onChange={(e) => setForm({ ...form, take_profit: e.target.value })}
-              className="input"
-            />
+          <Field label="Take Profit" optional>
+            <input type="number" step="any" value={form.take_profit} onChange={(e) => setForm({ ...form, take_profit: e.target.value })} className="input tabular-nums" />
           </Field>
         </div>
 
         {/* Commission / Swap */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <Field label="Commission">
-            <input
-              type="number"
-              step="0.01"
-              value={form.commission}
-              onChange={(e) => setForm({ ...form, commission: e.target.value })}
-              className="input"
-            />
+            <input type="number" step="0.01" value={form.commission} onChange={(e) => setForm({ ...form, commission: e.target.value })} className="input tabular-nums" />
           </Field>
           <Field label="Swap">
-            <input
-              type="number"
-              step="0.01"
-              value={form.swap}
-              onChange={(e) => setForm({ ...form, swap: e.target.value })}
-              className="input"
-            />
+            <input type="number" step="0.01" value={form.swap} onChange={(e) => setForm({ ...form, swap: e.target.value })} className="input tabular-nums" />
           </Field>
         </div>
 
         {/* Auto P&L preview */}
         {autoCalc && (
           <div className="rounded-lg border border-border bg-surface p-4">
-            <p className="text-sm text-text-secondary">Calculated P&L</p>
-            <p className={`text-xl font-bold ${autoCalc.pnl >= 0 ? "text-profit" : "text-loss"}`}>
-              ${autoCalc.pnl.toFixed(2)} ({autoCalc.pips >= 0 ? "+" : ""}{autoCalc.pips.toFixed(1)} pips)
+            <p className="text-xs font-medium text-text-secondary">Calculated P&L</p>
+            <p className={`mt-1 text-xl font-bold tabular-nums ${autoCalc.pnl >= 0 ? "text-profit" : "text-loss"}`}>
+              ${autoCalc.pnl.toFixed(2)}
+              <span className="ml-2 text-sm font-normal text-text-secondary">
+                ({autoCalc.pips >= 0 ? "+" : ""}{autoCalc.pips.toFixed(1)} pips)
+              </span>
             </p>
           </div>
         )}
 
-        {error && <p className="text-sm text-loss">{error}</p>}
+        {error && (
+          <div className="rounded-lg border border-loss/20 bg-loss/10 px-3 py-2.5 text-sm text-loss">
+            {error}
+          </div>
+        )}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-accent py-3 font-medium text-black transition-colors hover:bg-accent-hover disabled:opacity-50"
+          className="flex w-full items-center justify-center rounded-lg bg-accent py-3 font-medium text-black transition-colors hover:bg-accent-hover disabled:opacity-50"
         >
-          {loading ? "Adding..." : "Add Trade"}
+          {loading ? (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+          ) : (
+            "Add Trade"
+          )}
         </button>
       </form>
     </div>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, optional, children }: { label: string; optional?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1.5 block text-sm text-text-secondary">{label}</label>
+      <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-text-secondary">
+        {label}
+        {optional && <span className="ml-1 normal-case tracking-normal text-text-secondary/50">(optional)</span>}
+      </label>
       {children}
     </div>
   );

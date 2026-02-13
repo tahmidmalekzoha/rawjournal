@@ -1,0 +1,13 @@
+.git
+.github
+web/
+supabase/
+node_modules/
+__pycache__/
+*.pyc
+*.md
+.vscode/
+.env
+.env.*
+!.env.example
+*.log

@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
     .from("accounts")
     .select("id")
     .eq("id", account_id)
+    .eq("user_id", user.id)
     .single();
 
   if (!account) {

@@ -1,38 +1,51 @@
-# Trade sync worker — Wine + Python + MT5
+# Trade sync worker — Wine + MT5 + Python (mt5linux rpyc bridge)
+#
+# Architecture:
+#   Wine runs MT5 terminal + Windows Python with rpyc server
+#   Native Linux Python runs the worker, connects via mt5linux
+#
+# First container start is slow (~5 min): Wine init + Python install + MT5 install
+# Subsequent starts are fast (volumes persist the Wine prefix)
+
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DISPLAY=:99
+ENV WINEDEBUG=-all
 
-# Install Wine + Xvfb + Python
+# Install Wine, Xvfb, native Python 3, and tools
 RUN dpkg --add-architecture i386 && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         wine64 wine32 winbind xvfb \
-        python3.11 python3.11-venv python3-pip \
-        wget ca-certificates \
-        supervisor && \
+        python3 python3-venv python3-pip \
+        wget ca-certificates cabextract \
+        procps net-tools && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Create working dirs
-RUN mkdir -p /opt/mt5 /opt/sync-engine /var/log/rawjournal
+RUN mkdir -p /opt/mt5 /opt/sync-engine /opt/wine-python /var/log/rawjournal
 
-# Python venv
-RUN python3.11 -m venv /opt/venv
+# Native Python venv for the worker process
+RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install Python deps
+# Install native Python dependencies (mt5linux bridges to Wine rpyc)
 COPY sync-engine/requirements.txt /opt/sync-engine/requirements.txt
 RUN pip install --no-cache-dir -r /opt/sync-engine/requirements.txt
+
+# Download Windows Python 3.11 installer (installed into Wine prefix at first run)
+RUN wget -q -O /opt/wine-python/python-installer.exe \
+    "https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe"
 
 # Copy sync engine code
 COPY sync-engine/ /opt/sync-engine/
 
-# Copy startup script
-COPY docker/scripts/start-worker.sh /opt/start-worker.sh
-RUN chmod +x /opt/start-worker.sh
+# Copy startup + rpyc scripts
+COPY docker/scripts/ /opt/scripts/
+RUN chmod +x /opt/scripts/*.sh
 
 WORKDIR /opt/sync-engine
 
-ENTRYPOINT ["/opt/start-worker.sh"]
+ENTRYPOINT ["/opt/scripts/start-worker.sh"]

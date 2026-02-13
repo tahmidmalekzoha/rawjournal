@@ -9,11 +9,10 @@ import {
   Target,
   BarChart3,
   Clipboard,
-  Search,
   Plus,
-  Bell,
-  ChevronLeft,
-  ChevronRight,
+  TrendingUp,
+  TrendingDown,
+  ArrowUpRight,
 } from "lucide-react";
 import {
   BarChart,
@@ -74,96 +73,73 @@ export default function DashboardClient({
 }: Props) {
   const [period, setPeriod] = useState<(typeof periodFilters)[number]>("1W");
 
-  // Filter performance data by period
   const filteredPerformance = useMemo(() => {
     if (period === "ALL") return performanceData;
     const now = new Date();
     let cutoff: Date;
     switch (period) {
-      case "1D":
-        cutoff = subDays(now, 1);
-        break;
-      case "1W":
-        cutoff = subDays(now, 7);
-        break;
-      case "1M":
-        cutoff = subMonths(now, 1);
-        break;
-      case "3M":
-        cutoff = subMonths(now, 3);
-        break;
-      default:
-        return performanceData;
+      case "1D": cutoff = subDays(now, 1); break;
+      case "1W": cutoff = subDays(now, 7); break;
+      case "1M": cutoff = subMonths(now, 1); break;
+      case "3M": cutoff = subMonths(now, 3); break;
+      default: return performanceData;
     }
     return performanceData.filter((d) => isAfter(parseISO(d.date), cutoff));
   }, [performanceData, period]);
 
   const periodPnl = filteredPerformance.reduce((s, d) => s + d.pnl, 0);
 
-  // Build calendar grid (starts Monday)
+  // Calendar grid (starts Monday)
   const firstDayOfWeek = calendarData.length > 0 ? calendarData[0].dayOfWeek : 1;
-  // Adjust so Monday = 0
   const offset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
 
   const statCards = [
     {
-      label: "TOTAL P&L",
+      label: "Total P&L",
       value: formatPnl(totalPnl),
       icon: DollarSign,
-      badge: "TOTAL",
       color: totalPnl >= 0 ? "text-profit" : "text-loss",
+      sub: `${totalClosed} closed trades`,
     },
     {
-      label: "UNREALIZED",
+      label: "Unrealized",
       value: formatPnl(unrealizedPnl),
       icon: Clock,
-      badge: null,
       color: unrealizedPnl >= 0 ? "text-profit" : "text-loss",
+      sub: `${positions.length} open`,
     },
     {
-      label: "REALIZED",
+      label: "Realized",
       value: formatPnl(realizedPnl),
       icon: CheckCircle2,
-      badge: null,
       color: realizedPnl >= 0 ? "text-profit" : "text-loss",
+      sub: null,
     },
     {
-      label: "WIN RATE",
+      label: "Win Rate",
       value: `${winRate}%`,
       icon: Target,
-      badge: null,
-      subtitle: `${totalClosed} closed trades`,
       color: "text-text-primary",
+      sub: null,
+      progress: parseFloat(winRate) || 0,
     },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Page header */}
+      <div className="flex items-end justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Dashboard</h1>
-          <p className="text-sm text-text-secondary">{currentDate}</p>
+          <p className="mt-0.5 text-sm text-text-secondary">{currentDate}</p>
         </div>
-        <div className="flex items-center gap-3">
-          {/* Search bar */}
-          <div className="hidden sm:flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2">
-            <Search className="h-4 w-4 text-text-secondary" />
-            <span className="text-sm text-text-secondary">Search...</span>
-            <kbd className="ml-8 rounded border border-border bg-background px-1.5 py-0.5 text-[10px] text-text-secondary">
-              Ctrl-K
-            </kbd>
-          </div>
-          <Link
-            href="/dashboard/trades/add"
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-black transition-colors hover:bg-accent-hover"
-          >
-            <Plus className="h-4 w-4" />
-          </Link>
-          <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text-secondary transition-colors hover:bg-surface-hover">
-            <Bell className="h-4 w-4" />
-          </button>
-        </div>
+        <Link
+          href="/dashboard/trades/add"
+          className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-accent-hover"
+        >
+          <Plus className="h-4 w-4" />
+          Add Trade
+        </Link>
       </div>
 
       {/* Stat cards */}
@@ -173,40 +149,25 @@ export default function DashboardClient({
           return (
             <div
               key={card.label}
-              className="relative rounded-xl border border-border bg-surface p-5"
+              className="group rounded-xl border border-border bg-surface p-4 transition-colors hover:border-border/80"
             >
-              {card.badge && (
-                <span className="absolute top-4 right-4 rounded bg-accent/20 px-2 py-0.5 text-[10px] font-semibold text-accent">
-                  {card.badge}
-                </span>
-              )}
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background">
-                <Icon className="h-5 w-5 text-text-secondary" strokeWidth={1.5} />
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background">
+                  <Icon className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
+                </div>
               </div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-text-secondary">
-                {card.label}
-              </p>
-              <p className={`mt-1 text-2xl font-bold ${card.color}`}>
+              <p className="text-xs font-medium text-text-secondary">{card.label}</p>
+              <p className={`mt-0.5 text-xl font-bold tracking-tight ${card.color}`}>
                 {card.value}
               </p>
-              {card.subtitle && (
-                <p className="mt-0.5 text-xs text-text-secondary">{card.subtitle}</p>
+              {card.sub && (
+                <p className="mt-1 text-[11px] text-text-secondary">{card.sub}</p>
               )}
-              {card.label === "TOTAL P&L" && (
-                <p className="mt-0.5 text-xs text-profit">
-                  → {totalClosed} trades
-                </p>
-              )}
-              {card.label === "UNREALIZED" && (
-                <p className="mt-0.5 text-xs text-text-secondary">
-                  {positions.length} open positions
-                </p>
-              )}
-              {card.label === "WIN RATE" && (
-                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-border">
+              {"progress" in card && card.progress !== undefined && (
+                <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-border">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-profit to-profit/60"
-                    style={{ width: `${parseFloat(winRate) || 0}%` }}
+                    className="h-full rounded-full bg-accent/50 transition-all"
+                    style={{ width: `${card.progress}%` }}
                   />
                 </div>
               )}
@@ -215,25 +176,23 @@ export default function DashboardClient({
         })}
       </div>
 
-      {/* Performance + Calendar row */}
-      <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
+      {/* Performance + Calendar */}
+      <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
         {/* Performance chart */}
         <div className="rounded-xl border border-border bg-surface p-5">
           <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-text-secondary" />
-              <span className="text-xs font-medium uppercase tracking-wider text-text-secondary">
-                Performance
-              </span>
+              <span className="text-sm font-medium text-text-primary">Performance</span>
             </div>
             <div className="flex rounded-lg border border-border bg-background p-0.5">
               {periodFilters.map((p) => (
                 <button
                   key={p}
                   onClick={() => setPeriod(p)}
-                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                     period === p
-                      ? "bg-surface-hover text-text-primary"
+                      ? "bg-white/[0.08] text-text-primary"
                       : "text-text-secondary hover:text-text-primary"
                   }`}
                 >
@@ -242,23 +201,23 @@ export default function DashboardClient({
               ))}
             </div>
           </div>
-          <p className={`mb-4 text-3xl font-bold ${periodPnl >= 0 ? "text-profit" : "text-loss"}`}>
+          <p className={`mb-4 text-2xl font-bold ${periodPnl >= 0 ? "text-profit" : "text-loss"}`}>
             {formatPnl(periodPnl)}
           </p>
           {filteredPerformance.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={filteredPerformance} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={filteredPerformance} margin={{ top: 0, right: 0, left: -10, bottom: 0 }}>
                 <XAxis
                   dataKey="date"
                   tickFormatter={(d) => format(parseISO(d), "MMM d")}
                   stroke="#737373"
-                  fontSize={11}
+                  fontSize={10}
                   tickLine={false}
                   axisLine={{ stroke: "#1a1a1a" }}
                 />
                 <YAxis
                   stroke="#737373"
-                  fontSize={11}
+                  fontSize={10}
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(v) => `$${v}`}
@@ -274,7 +233,7 @@ export default function DashboardClient({
                   labelFormatter={(d) => format(parseISO(d as string), "MMM d, yyyy")}
                   formatter={(value: any) => [`$${Number(value).toFixed(2)}`, "P&L"]}
                 />
-                <Bar dataKey="pnl" radius={[3, 3, 0, 0]} maxBarSize={40}>
+                <Bar dataKey="pnl" radius={[3, 3, 0, 0]} maxBarSize={32}>
                   {filteredPerformance.map((entry, i) => (
                     <Cell key={i} fill={entry.pnl >= 0 ? "#5a9a6e" : "#c4605a"} />
                   ))}
@@ -282,29 +241,27 @@ export default function DashboardClient({
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex h-[220px] items-center justify-center text-sm text-text-secondary">
-              No trades taken
+            <div className="flex h-[200px] flex-col items-center justify-center gap-2">
+              <BarChart3 className="h-8 w-8 text-border" strokeWidth={1} />
+              <p className="text-sm text-text-secondary">No trades in this period</p>
             </div>
           )}
         </div>
 
-        {/* Monthly P&L Calendar */}
+        {/* Monthly Calendar */}
         <div className="rounded-xl border border-border bg-surface p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-text-primary">Monthly P&L</h3>
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-medium text-text-primary">Monthly P&L</h3>
             <span className="text-xs text-text-secondary">{monthLabel}</span>
           </div>
-          {/* Day headers */}
           <div className="mb-2 grid grid-cols-7 gap-1 text-center">
             {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-              <span key={i} className="text-[11px] font-medium text-text-secondary">
+              <span key={i} className="text-[10px] font-medium text-text-secondary">
                 {d}
               </span>
             ))}
           </div>
-          {/* Calendar grid */}
           <div className="grid grid-cols-7 gap-1">
-            {/* Empty cells for offset */}
             {Array.from({ length: offset }).map((_, i) => (
               <div key={`empty-${i}`} className="aspect-square" />
             ))}
@@ -320,18 +277,18 @@ export default function DashboardClient({
                       ? `${day.date}: $${day.pnl.toFixed(2)} (${day.trades} trades)`
                       : day.date
                   }
-                  className={`relative flex aspect-square items-center justify-center rounded-md text-xs transition-colors ${
+                  className={`relative flex aspect-square items-center justify-center rounded-md text-[11px] transition-colors ${
                     today
-                      ? "border border-accent/30 bg-accent/5 text-text-primary font-medium"
+                      ? "ring-1 ring-accent/40 text-text-primary font-medium"
                       : day.trades > 0
-                      ? "bg-surface-hover text-text-primary"
-                      : "text-text-secondary hover:bg-surface-hover"
+                        ? "text-text-primary"
+                        : "text-text-secondary/60"
                   }`}
                 >
                   {day.dayNum}
                   {day.trades > 0 && (
                     <span
-                      className={`absolute bottom-1 h-1 w-1 rounded-full ${
+                      className={`absolute bottom-0.5 h-1 w-1 rounded-full ${
                         hasProfit ? "bg-profit" : hasLoss ? "bg-loss" : "bg-text-secondary"
                       }`}
                     />
@@ -340,15 +297,12 @@ export default function DashboardClient({
               );
             })}
           </div>
-          {/* Legend */}
-          <div className="mt-4 flex items-center justify-end gap-3 text-[11px] text-text-secondary">
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-profit" />
-              Profit
+          <div className="mt-3 flex items-center justify-end gap-3 text-[10px] text-text-secondary">
+            <span className="flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-profit" /> Profit
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-loss" />
-              Loss
+            <span className="flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-loss" /> Loss
             </span>
           </div>
         </div>
@@ -356,34 +310,44 @@ export default function DashboardClient({
 
       {/* Open Positions */}
       <section>
-        <h2 className="mb-3 text-base font-semibold text-text-primary">Open Positions</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-text-primary">
+            Open Positions
+            {positions.length > 0 && (
+              <span className="ml-2 text-xs font-normal text-text-secondary">({positions.length})</span>
+            )}
+          </h2>
+        </div>
         {positions.length > 0 ? (
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-surface text-text-secondary">
+              <thead className="border-b border-border bg-surface">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Symbol</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Direction</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider">Size</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider">Entry</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider">Current</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider">P&L</th>
+                  <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-text-secondary">Symbol</th>
+                  <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-text-secondary">Side</th>
+                  <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-text-secondary">Size</th>
+                  <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-text-secondary">Entry</th>
+                  <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-text-secondary">Current</th>
+                  <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-text-secondary">P&L</th>
                 </tr>
               </thead>
               <tbody>
                 {positions.map((p: any) => (
-                  <tr key={p.id} className="border-b border-border last:border-0 hover:bg-surface-hover">
-                    <td className="px-4 py-3 font-medium text-text-primary">{p.symbol}</td>
+                  <tr key={p.id} className="border-b border-border last:border-0 transition-colors hover:bg-surface-hover">
                     <td className="px-4 py-3">
-                      <span className={p.direction === "buy" ? "text-profit" : "text-loss"}>
+                      <span className="font-medium text-text-primary">{p.symbol}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1 text-xs font-medium ${p.direction === "buy" ? "text-profit" : "text-loss"}`}>
+                        {p.direction === "buy" ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                         {p.direction.toUpperCase()}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right">{p.position_size}</td>
-                    <td className="px-4 py-3 text-right">{p.entry_price}</td>
-                    <td className="px-4 py-3 text-right">{p.current_price}</td>
+                    <td className="px-4 py-3 text-right text-text-secondary">{p.position_size}</td>
+                    <td className="px-4 py-3 text-right text-text-primary">{p.entry_price}</td>
+                    <td className="px-4 py-3 text-right text-text-primary">{p.current_price}</td>
                     <td className={`px-4 py-3 text-right font-medium ${(p.floating_pnl ?? 0) >= 0 ? "text-profit" : "text-loss"}`}>
-                      ${p.floating_pnl?.toFixed(2)}
+                      {formatPnl(p.floating_pnl ?? 0)}
                     </td>
                   </tr>
                 ))}
@@ -391,14 +355,35 @@ export default function DashboardClient({
             </table>
           </div>
         ) : (
-          <div className="rounded-xl border border-border bg-surface px-6 py-8">
-            <div className="flex items-center gap-3 text-text-secondary">
-              <Clipboard className="h-5 w-5" strokeWidth={1.5} />
-              <span className="text-sm">No open positions</span>
-            </div>
+          <div className="rounded-xl border border-dashed border-border bg-surface/50 px-6 py-10 text-center">
+            <Clipboard className="mx-auto h-6 w-6 text-text-secondary/50" strokeWidth={1.5} />
+            <p className="mt-2 text-sm text-text-secondary">No open positions</p>
+            <p className="mt-1 text-xs text-text-secondary/60">Open positions will appear here when synced</p>
           </div>
         )}
       </section>
+
+      {/* Quick links */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { href: "/dashboard/trades", label: "View Trades", icon: ArrowUpRight },
+          { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+          { href: "/dashboard/journal", label: "Journal", icon: Clipboard },
+          { href: "/dashboard/trades/import", label: "Import CSV", icon: Plus },
+        ].map((link) => {
+          const Icon = link.icon;
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary"
+            >
+              <Icon className="h-4 w-4" strokeWidth={1.5} />
+              {link.label}
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }

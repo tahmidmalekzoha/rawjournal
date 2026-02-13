@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { parseCsvFile, mapRowToTrade } from "@/lib/utils/csv-parser";
+import { ArrowLeft, Upload, RotateCcw, CheckCircle2 } from "lucide-react";
 import type { Account, CsvColumnMapping } from "@/types";
 import type { CsvParseResult } from "@/lib/utils/csv-parser";
 
@@ -85,7 +87,7 @@ export default function ImportTradesPage() {
   }
 
   const mappingFields: { key: keyof CsvColumnMapping; label: string; required: boolean }[] = [
-    { key: "ticket_number", label: "Ticket/Deal #", required: false },
+    { key: "ticket_number", label: "Ticket / Deal #", required: false },
     { key: "symbol", label: "Symbol", required: true },
     { key: "direction", label: "Direction (Buy/Sell)", required: true },
     { key: "entry_timestamp", label: "Entry Time", required: true },
@@ -93,7 +95,7 @@ export default function ImportTradesPage() {
     { key: "entry_price", label: "Entry Price", required: true },
     { key: "exit_price", label: "Exit Price", required: false },
     { key: "position_size", label: "Lot Size", required: true },
-    { key: "pnl", label: "Profit/Loss", required: false },
+    { key: "pnl", label: "Profit / Loss", required: false },
     { key: "commission", label: "Commission", required: false },
     { key: "swap", label: "Swap", required: false },
     { key: "stop_loss", label: "Stop Loss", required: false },
@@ -102,16 +104,22 @@ export default function ImportTradesPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Import Trades</h1>
-        <button onClick={() => router.back()} className="text-sm text-text-secondary hover:text-text-primary">
-          Cancel
-        </button>
+      {/* Header */}
+      <div>
+        <Link
+          href="/dashboard/trades"
+          className="mb-2 inline-flex items-center gap-1.5 text-sm text-text-secondary transition-colors hover:text-text-primary"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to trades
+        </Link>
+        <h1 className="text-2xl font-bold text-text-primary">Import Trades</h1>
       </div>
 
       {/* Account selector */}
       <div>
-        <label className="mb-1.5 block text-sm text-text-secondary">Account</label>
+        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-text-secondary">
+          Account
+        </label>
         <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className="input">
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>{a.label} ({a.broker})</option>
@@ -121,15 +129,16 @@ export default function ImportTradesPage() {
 
       {/* File dropzone */}
       {!parseResult && (
-        <div
+        <label
           onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
           onDragLeave={() => setDragActive(false)}
           onDrop={handleDrop}
-          className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-12 transition-colors ${
-            dragActive ? "border-accent bg-accent/5" : "border-border hover:border-accent/50"
+          className={`relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-16 transition-colors ${
+            dragActive ? "border-accent bg-accent/5" : "border-border hover:border-text-secondary"
           }`}
         >
-          <p className="text-lg font-medium text-text-primary">Drop CSV file here</p>
+          <Upload className="mb-3 h-8 w-8 text-text-secondary" />
+          <p className="text-base font-medium text-text-primary">Drop CSV file here</p>
           <p className="mt-1 text-sm text-text-secondary">or click to browse</p>
           <input
             type="file"
@@ -137,31 +146,32 @@ export default function ImportTradesPage() {
             onChange={handleFileInput}
             className="absolute inset-0 cursor-pointer opacity-0"
           />
-          <p className="mt-4 text-xs text-text-secondary">Supports MT5 CSV exports and custom formats</p>
-        </div>
+          <p className="mt-4 text-xs text-text-secondary/60">Supports MT5 CSV exports and custom formats</p>
+        </label>
       )}
 
-      {/* Parse result */}
+      {/* Parse result + mapping */}
       {parseResult && !result && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between rounded-lg border border-border bg-surface p-4">
+        <div className="space-y-5">
+          {/* File summary */}
+          <div className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3">
             <div>
-              <p className="font-medium">{parseResult.rows.length} rows detected</p>
-              <p className="text-sm text-text-secondary">
-                Format: {parseResult.detectedFormat === "mt5" ? "MT5 Export (auto-detected)" : "Generic CSV"}
+              <p className="text-sm font-medium text-text-primary">{parseResult.rows.length} rows detected</p>
+              <p className="text-xs text-text-secondary">
+                {parseResult.detectedFormat === "mt5" ? "MT5 Export (auto-detected)" : "Generic CSV"}
               </p>
             </div>
             <button
               onClick={() => { setParseResult(null); setMapping({}); }}
-              className="text-sm text-text-secondary hover:text-text-primary"
+              className="inline-flex items-center gap-1.5 text-xs text-text-secondary transition-colors hover:text-text-primary"
             >
-              Reset
+              <RotateCcw className="h-3 w-3" /> Reset
             </button>
           </div>
 
           {/* Column mapping */}
           <div>
-            <h2 className="mb-3 text-lg font-semibold">Column Mapping</h2>
+            <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-text-secondary">Column Mapping</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {mappingFields.map((field) => (
                 <div key={field.key}>
@@ -185,21 +195,23 @@ export default function ImportTradesPage() {
 
           {/* Preview */}
           <div>
-            <h2 className="mb-3 text-lg font-semibold">Preview (first 5 rows)</h2>
+            <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-text-secondary">
+              Preview (first 5 rows)
+            </h2>
             <div className="overflow-x-auto rounded-lg border border-border">
               <table className="w-full text-xs">
-                <thead className="border-b border-border bg-surface text-text-secondary">
+                <thead className="border-b border-border bg-surface">
                   <tr>
                     {parseResult.headers.map((h) => (
-                      <th key={h} className="px-3 py-2 text-left whitespace-nowrap">{h}</th>
+                      <th key={h} className="px-3 py-2 text-left whitespace-nowrap font-medium text-text-secondary">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {parseResult.rows.slice(0, 5).map((row, i) => (
-                    <tr key={i} className="border-b border-border last:border-0">
+                    <tr key={i} className="border-b border-border last:border-0 hover:bg-white/[0.02]">
                       {parseResult.headers.map((h) => (
-                        <td key={h} className="px-3 py-2 whitespace-nowrap">{row[h]}</td>
+                        <td key={h} className="px-3 py-2 whitespace-nowrap text-text-primary tabular-nums">{row[h]}</td>
                       ))}
                     </tr>
                   ))}
@@ -211,29 +223,34 @@ export default function ImportTradesPage() {
           <button
             onClick={handleImport}
             disabled={importing}
-            className="w-full rounded-lg bg-accent py-3 font-medium text-black transition-colors hover:bg-accent-hover disabled:opacity-50"
+            className="flex w-full items-center justify-center rounded-lg bg-accent py-3 font-medium text-black transition-colors hover:bg-accent-hover disabled:opacity-50"
           >
-            {importing ? `Importing...` : `Import ${parseResult.rows.length} Trades`}
+            {importing ? (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+            ) : (
+              `Import ${parseResult.rows.length} Trades`
+            )}
           </button>
         </div>
       )}
 
       {/* Import result */}
       {result && (
-        <div className="space-y-4 rounded-xl border border-border bg-surface p-6 text-center">
-          <h2 className="text-xl font-bold text-profit">Import Complete</h2>
+        <div className="space-y-5 rounded-xl border border-border bg-surface p-6 text-center">
+          <CheckCircle2 className="mx-auto h-10 w-10 text-profit" />
+          <h2 className="text-xl font-bold text-text-primary">Import Complete</h2>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <p className="text-2xl font-bold">{result.imported}</p>
-              <p className="text-sm text-text-secondary">Imported</p>
+              <p className="text-2xl font-bold tabular-nums text-text-primary">{result.imported}</p>
+              <p className="text-xs text-text-secondary">Imported</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-text-secondary">{result.duplicates}</p>
-              <p className="text-sm text-text-secondary">Duplicates skipped</p>
+              <p className="text-2xl font-bold tabular-nums text-text-secondary">{result.duplicates}</p>
+              <p className="text-xs text-text-secondary">Duplicates</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-loss">{result.errors}</p>
-              <p className="text-sm text-text-secondary">Errors</p>
+              <p className="text-2xl font-bold tabular-nums text-loss">{result.errors}</p>
+              <p className="text-xs text-text-secondary">Errors</p>
             </div>
           </div>
           <button
@@ -245,7 +262,11 @@ export default function ImportTradesPage() {
         </div>
       )}
 
-      {error && <p className="text-sm text-loss">{error}</p>}
+      {error && (
+        <div className="rounded-lg border border-loss/20 bg-loss/10 px-3 py-2.5 text-sm text-loss">
+          {error}
+        </div>
+      )}
     </div>
   );
 }

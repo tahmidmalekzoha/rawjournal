@@ -268,6 +268,16 @@ body {
 .particle-14 { top: 82%; left: 85%; animation-duration: 19s; }
 .particle-15 { top: 3%;  left: 25%; animation-duration: 24s; opacity: 0.25; }
 .particle-16 { top: 70%; left: 96%; animation-duration: 22s; width: 2px; height: 2px; opacity: 0.4; }
+.particle-17 { top: 90%; left: 15%; animation-duration: 21s; opacity: 0.3; }
+.particle-18 { top: 12%; left: 55%; animation-duration: 26s; width: 1px; height: 1px; opacity: 0.45; }
+.particle-19 { top: 45%; left: 40%; animation-duration: 19s; width: 2px; height: 2px; opacity: 0.25; }
+.particle-20 { top: 60%; left: 75%; animation-duration: 23s; opacity: 0.35; }
+.particle-21 { top: 85%; left: 50%; animation-duration: 25s; width: 1px; height: 1px; opacity: 0.3; }
+.particle-22 { top: 30%; left: 60%; animation-duration: 20s; width: 3px; height: 3px; opacity: 0.2; }
+.particle-23 { top: 55%; left: 30%; animation-duration: 27s; opacity: 0.4; }
+.particle-24 { top: 78%; left: 65%; animation-duration: 18s; width: 2px; height: 2px; opacity: 0.35; }
+.particle-25 { top: 40%; left: 80%; animation-duration: 24s; width: 1px; height: 1px; opacity: 0.45; }
+.particle-26 { top: 92%; left: 35%; animation-duration: 22s; opacity: 0.25; }
 
 @keyframes particle-drift {
   0% {

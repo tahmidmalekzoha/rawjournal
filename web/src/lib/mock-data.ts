@@ -275,6 +275,58 @@ function generateJournals(trades: Trade[]): Journal[] {
   return journals;
 }
 
+function generateCandles(trades: Trade[]) {
+  const symbols = [...new Set(trades.map((t) => t.symbol))];
+  const timeframes = ["M30", "H1", "H4", "D1", "W1"];
+  const candles: any[] = [];
+  const now = Date.now();
+  const sixMonthsAgo = now - 180 * 24 * 60 * 60 * 1000;
+
+  for (const symbol of symbols) {
+    const base = basePriceForSymbol(symbol);
+    const pip = pipSizeForSymbol(symbol);
+
+    for (const tf of timeframes) {
+      const intervalMs =
+        tf === "M30"  ? 30 * 60 * 1000 :
+        tf === "H1"   ? 60 * 60 * 1000 :
+        tf === "H4"   ? 4 * 60 * 60 * 1000 :
+        tf === "D1"   ? 24 * 60 * 60 * 1000 :
+                        7 * 24 * 60 * 60 * 1000;
+
+      // Limit candle count per symbol/tf to keep memory reasonable
+      const maxCandles = tf === "M30" ? 500 : tf === "H1" ? 500 : tf === "H4" ? 300 : tf === "D1" ? 180 : 52;
+      const startTime = Math.max(sixMonthsAgo, now - maxCandles * intervalMs);
+      let price = base + pip * randomBetween(-50, 50);
+
+      for (let t = startTime; t < now; t += intervalMs) {
+        const open = price;
+        const move = pip * randomBetween(-20, 20);
+        const close = open + move;
+        const high = Math.max(open, close) + pip * randomBetween(1, 15);
+        const low = Math.min(open, close) - pip * randomBetween(1, 15);
+        const volume = randomInt(50, 5000);
+
+        candles.push({
+          id: uuid(50000 + candles.length),
+          symbol,
+          timeframe: tf,
+          timestamp: new Date(t).toISOString(),
+          open: Math.round(open * 1e6) / 1e6,
+          high: Math.round(high * 1e6) / 1e6,
+          low: Math.round(low * 1e6) / 1e6,
+          close: Math.round(close * 1e6) / 1e6,
+          volume,
+        });
+
+        price = close; // walk forward
+      }
+    }
+  }
+
+  return candles;
+}
+
 function generateTags(): Tag[] {
   const tags = [
     { name: "Breakout", color: "#3b82f6" },
@@ -299,3 +351,4 @@ export const mockTrades = generateTrades();
 export const mockOpenPositions = generateOpenPositions();
 export const mockJournals = generateJournals(mockTrades);
 export const mockTags = generateTags();
+export const mockCandles = generateCandles(mockTrades);

@@ -32,6 +32,7 @@ export async function GET(
   const { data: trades } = await supabase
     .from("trades")
     .select("id, direction, entry_timestamp, exit_timestamp, entry_price, exit_price, position_size, pnl, stop_loss, take_profit")
+    .eq("user_id", user.id)
     .eq("symbol", params.symbol.toUpperCase())
     .order("entry_timestamp", { ascending: true });
 

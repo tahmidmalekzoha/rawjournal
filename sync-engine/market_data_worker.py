@@ -13,21 +13,21 @@ import time
 from datetime import datetime, timedelta
 
 import redis.asyncio as aioredis
-import MetaTrader5 as mt5
 
 import config
+from mt5_bridge import mt5, TIMEFRAME_M30, TIMEFRAME_H1, TIMEFRAME_H4, TIMEFRAME_D1, TIMEFRAME_W1
 import database as db
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [market-data] %(message)s")
 logger = logging.getLogger("market-data")
 
-# MT5 timeframe mapping
+# MT5 timeframe mapping (constants from mt5_bridge, no remote lookup needed)
 TF_MAP = {
-    "M30": mt5.TIMEFRAME_M30,
-    "H1": mt5.TIMEFRAME_H1,
-    "H4": mt5.TIMEFRAME_H4,
-    "D1": mt5.TIMEFRAME_D1,
-    "W1": mt5.TIMEFRAME_W1,
+    "M30": TIMEFRAME_M30,
+    "H1": TIMEFRAME_H1,
+    "H4": TIMEFRAME_H4,
+    "D1": TIMEFRAME_D1,
+    "W1": TIMEFRAME_W1,
 }
 
 
