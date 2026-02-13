@@ -11,3 +11,4 @@ venv/
 dist/
 build/
 mt5-data-*/
+tsconfig.tsbuildinfo
