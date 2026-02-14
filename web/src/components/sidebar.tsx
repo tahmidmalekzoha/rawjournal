@@ -28,6 +28,7 @@ const menuItems = [
 ];
 
 const bottomItems = [
+  { href: "/dashboard/settings/accounts", label: "MT5 Accounts", icon: Settings },
   { href: "/dashboard/settings/tags", label: "Tags & Tools", icon: Wrench },
 ];
 
