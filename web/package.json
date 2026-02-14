@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
-    "@supabase/ssr": "^0.3.0",
-    "@supabase/supabase-js": "^2.43.0",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.46.1",
     "@tanstack/react-table": "^8.21.3",
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.0",

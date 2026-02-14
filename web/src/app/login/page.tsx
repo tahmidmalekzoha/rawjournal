@@ -27,23 +27,28 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const { error: authError } = isSignUp
-      ? await supabase.auth.signUp({ email, password })
-      : await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const { data, error: authError } = isSignUp
+        ? await supabase.auth.signUp({ email, password })
+        : await supabase.auth.signInWithPassword({ email, password });
 
-    if (authError) {
-      setError(authError.message);
+      if (authError) {
+        setError(authError.message);
+        setLoading(false);
+        return;
+      }
+
+      if (isSignUp) {
+        setError("Check your email to confirm your account.");
+        setLoading(false);
+        return;
+      }
+
+      window.location.href = "/dashboard";
+    } catch {
+      setError("Something went wrong. Please try again.");
       setLoading(false);
-      return;
     }
-
-    if (isSignUp) {
-      setError("Check your email to confirm your account.");
-      setLoading(false);
-      return;
-    }
-
-    router.push("/dashboard");
   }
 
   return (
