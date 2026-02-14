@@ -1,16 +1,15 @@
 # RawJournal MT5 Workers — Docker Compose
-# Deploy: bash docker/scripts/deploy.sh up
-# Build context is repo root (../) so Dockerfiles can COPY sync-engine/
+# Build & push images from VPS:
+#   docker build -t ghcr.io/tahmidmalekzoha/rawjournal-scheduler -f docker/Dockerfile.scheduler .
+#   docker build -t ghcr.io/tahmidmalekzoha/rawjournal-worker -f docker/Dockerfile.worker .
+#   docker push ghcr.io/tahmidmalekzoha/rawjournal-scheduler
+#   docker push ghcr.io/tahmidmalekzoha/rawjournal-worker
 
 services:
   scheduler:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.scheduler
-    ports:
-      - "8080:8080"
+    image: ghcr.io/tahmidmalekzoha/rawjournal-scheduler:latest
     environment:
-      - SUPABASE_URL=http://supabasekong-nock088o84k4g4g44k8wsoos.72.61.251.154.sslip.io
+      - SUPABASE_URL=https://api.rawjournal.pro
       - SUPABASE_SERVICE_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc3MDc5MjcyMCwiZXhwIjo0OTI2NDY2MzIwLCJyb2xlIjoic2VydmljZV9yb2xlIn0.B3evuN50VCz-r_DgjtZJoqCNFGhlYITgs_9TPuSnCZ0
       - REDIS_URL=redis://redis:6379
     depends_on:
@@ -29,9 +28,7 @@ services:
         max-file: "3"
 
   worker-1:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.worker
+    image: ghcr.io/tahmidmalekzoha/rawjournal-worker:latest
     environment:
       - WORKER_ID=1
       - SUPABASE_URL=${SUPABASE_URL}
@@ -57,9 +54,7 @@ services:
         max-file: "3"
 
   worker-2:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.worker
+    image: ghcr.io/tahmidmalekzoha/rawjournal-worker:latest
     environment:
       - WORKER_ID=2
       - SUPABASE_URL=${SUPABASE_URL}
@@ -85,9 +80,7 @@ services:
         max-file: "3"
 
   worker-3:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.worker
+    image: ghcr.io/tahmidmalekzoha/rawjournal-worker:latest
     environment:
       - WORKER_ID=3
       - SUPABASE_URL=${SUPABASE_URL}
@@ -113,9 +106,7 @@ services:
         max-file: "3"
 
   worker-4:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.worker
+    image: ghcr.io/tahmidmalekzoha/rawjournal-worker:latest
     environment:
       - WORKER_ID=4
       - IS_MARKET_DATA_WORKER=true
