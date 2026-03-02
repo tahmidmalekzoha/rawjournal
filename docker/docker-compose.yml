@@ -31,10 +31,10 @@ services:
     image: ghcr.io/tahmidmalekzoha/rawjournal-worker:latest
     environment:
       - WORKER_ID=1
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - SUPABASE_URL=https://api.rawjournal.pro
+      - SUPABASE_SERVICE_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc3MDc5MjcyMCwiZXhwIjo0OTI2NDY2MzIwLCJyb2xlIjoic2VydmljZV9yb2xlIn0.B3evuN50VCz-r_DgjtZJoqCNFGhlYITgs_9TPuSnCZ0
       - REDIS_URL=redis://redis:6379
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - ENCRYPTION_KEY=66d157c1e407eb393d6ffbd0d6f37613cd5a998d0a9f2b7fd2775cfc1c8860a4
     volumes:
       - mt5-data-1:/opt/mt5/worker_1
     depends_on:
@@ -57,10 +57,10 @@ services:
     image: ghcr.io/tahmidmalekzoha/rawjournal-worker:latest
     environment:
       - WORKER_ID=2
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - SUPABASE_URL=https://api.rawjournal.pro
+      - SUPABASE_SERVICE_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc3MDc5MjcyMCwiZXhwIjo0OTI2NDY2MzIwLCJyb2xlIjoic2VydmljZV9yb2xlIn0.B3evuN50VCz-r_DgjtZJoqCNFGhlYITgs_9TPuSnCZ0
       - REDIS_URL=redis://redis:6379
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - ENCRYPTION_KEY=66d157c1e407eb393d6ffbd0d6f37613cd5a998d0a9f2b7fd2775cfc1c8860a4
     volumes:
       - mt5-data-2:/opt/mt5/worker_2
     depends_on:
@@ -83,10 +83,10 @@ services:
     image: ghcr.io/tahmidmalekzoha/rawjournal-worker:latest
     environment:
       - WORKER_ID=3
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - SUPABASE_URL=https://api.rawjournal.pro
+      - SUPABASE_SERVICE_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc3MDc5MjcyMCwiZXhwIjo0OTI2NDY2MzIwLCJyb2xlIjoic2VydmljZV9yb2xlIn0.B3evuN50VCz-r_DgjtZJoqCNFGhlYITgs_9TPuSnCZ0
       - REDIS_URL=redis://redis:6379
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - ENCRYPTION_KEY=66d157c1e407eb393d6ffbd0d6f37613cd5a998d0a9f2b7fd2775cfc1c8860a4
     volumes:
       - mt5-data-3:/opt/mt5/worker_3
     depends_on:
@@ -110,13 +110,13 @@ services:
     environment:
       - WORKER_ID=4
       - IS_MARKET_DATA_WORKER=true
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - SUPABASE_URL=https://api.rawjournal.pro
+      - SUPABASE_SERVICE_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc3MDc5MjcyMCwiZXhwIjo0OTI2NDY2MzIwLCJyb2xlIjoic2VydmljZV9yb2xlIn0.B3evuN50VCz-r_DgjtZJoqCNFGhlYITgs_9TPuSnCZ0
       - REDIS_URL=redis://redis:6379
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-      - DEMO_MT5_LOGIN=${DEMO_MT5_LOGIN}
-      - DEMO_MT5_PASSWORD=${DEMO_MT5_PASSWORD}
-      - DEMO_MT5_SERVER=${DEMO_MT5_SERVER}
+      - ENCRYPTION_KEY=66d157c1e407eb393d6ffbd0d6f37613cd5a998d0a9f2b7fd2775cfc1c8860a4
+      - DEMO_MT5_LOGIN=
+      - DEMO_MT5_PASSWORD=
+      - DEMO_MT5_SERVER=
     volumes:
       - mt5-data-4:/opt/mt5/worker_4
     depends_on:
