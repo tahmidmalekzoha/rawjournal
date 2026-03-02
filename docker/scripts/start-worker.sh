@@ -10,12 +10,41 @@ export WINEPREFIX=/opt/mt5/worker_${WORKER_ID}
 export DISPLAY=:99
 export WINEDEBUG=-all
 
+# Track consecutive failures to add backoff and prevent infinite rapid restart loops
+FAIL_COUNT_FILE="/tmp/.worker_${WORKER_ID}_fail_count"
+if [ -f "$FAIL_COUNT_FILE" ]; then
+    FAIL_COUNT=$(cat "$FAIL_COUNT_FILE")
+else
+    FAIL_COUNT=0
+fi
+
+if [ "$FAIL_COUNT" -gt 0 ]; then
+    BACKOFF=$(( FAIL_COUNT * 15 ))
+    [ "$BACKOFF" -gt 120 ] && BACKOFF=120
+    echo "Previous failures detected ($FAIL_COUNT). Waiting ${BACKOFF}s before retry..."
+    sleep "$BACKOFF"
+fi
+
 echo "=== RawJournal Worker $WORKER_ID Starting ==="
 
 # --- 1. Virtual display ---
 echo "[1/6] Starting Xvfb..."
+# Clean up stale Xvfb lock files and processes from previous runs
+rm -f /tmp/.X99-lock /tmp/.X11-unix/X99
+pkill -f "Xvfb :99" 2>/dev/null || true
+sleep 1
+
 Xvfb :99 -screen 0 1024x768x16 -nolisten tcp &
+XVFB_PID=$!
 sleep 2
+
+# Verify Xvfb actually started
+if ! kill -0 "$XVFB_PID" 2>/dev/null; then
+    echo "ERROR: Xvfb failed to start"
+    echo $(( FAIL_COUNT + 1 )) > "$FAIL_COUNT_FILE"
+    exit 1
+fi
+echo "       Xvfb started (PID $XVFB_PID)"
 
 # --- 2. Wine prefix ---
 if [ ! -d "$WINEPREFIX/drive_c" ]; then
@@ -31,14 +60,29 @@ fi
 WIN_PYTHON="$WINEPREFIX/drive_c/Python311/python.exe"
 if [ ! -f "$WIN_PYTHON" ]; then
     echo "[3/6] Installing Windows Python 3.11..."
-    wine64 /opt/wine-python/python-installer.exe /quiet InstallAllUsers=0 \
-        TargetDir="C:\\Python311" PrependPath=1 Include_test=0 \
-        Include_doc=0 Include_tcltk=0 2>/dev/null || true
-    sleep 15
 
-    if [ ! -f "$WIN_PYTHON" ]; then
-        echo "ERROR: Windows Python installation failed"
+    PYTHON_INSTALLED=false
+    for attempt in 1 2 3; do
+        echo "       Install attempt $attempt/3..."
+        wine64 /opt/wine-python/python-installer.exe /quiet InstallAllUsers=0 \
+            TargetDir="C:\\Python311" PrependPath=1 Include_test=0 \
+            Include_doc=0 Include_tcltk=0 2>&1 | tail -5 || true
+        sleep 15
+
+        if [ -f "$WIN_PYTHON" ]; then
+            PYTHON_INSTALLED=true
+            break
+        fi
+        echo "       Attempt $attempt failed. Contents of drive_c:"
         ls -la "$WINEPREFIX/drive_c/" 2>/dev/null || true
+        sleep 5
+    done
+
+    if [ "$PYTHON_INSTALLED" = false ]; then
+        echo "ERROR: Windows Python installation failed after 3 attempts"
+        echo "       Clearing Wine prefix to allow fresh retry on next start..."
+        rm -rf "$WINEPREFIX"
+        echo $(( FAIL_COUNT + 1 )) > "$FAIL_COUNT_FILE"
         exit 1
     fi
 
@@ -90,13 +134,18 @@ done
 # --- 6. Worker process ---
 echo "[6/6] Starting worker process..."
 
+# Reset fail counter on successful startup
+rm -f "$FAIL_COUNT_FILE"
+
 # Signal handling: clean shutdown of both processes
 cleanup() {
     echo "Shutting down worker $WORKER_ID..."
     kill $WORKER_PID 2>/dev/null || true
     kill $RPYC_PID 2>/dev/null || true
+    kill $XVFB_PID 2>/dev/null || true
     wait $WORKER_PID 2>/dev/null || true
     wait $RPYC_PID 2>/dev/null || true
+    rm -f /tmp/.X99-lock /tmp/.X11-unix/X99
     exit 0
 }
 trap cleanup SIGTERM SIGINT
