@@ -97,40 +97,60 @@ fi
 # --- 4. MetaTrader 5 terminal ---
 MT5_EXE="$WINEPREFIX/drive_c/Program Files/MetaTrader 5/terminal64.exe"
 if [ ! -f "$MT5_EXE" ]; then
-    echo "[4/6] Installing MetaTrader 5 from pre-extracted files..."
-
-    # Check if MT5 was pre-extracted during Docker build
-    if [ -d "/opt/mt5-portable" ]; then
-        # Find terminal64.exe in the extracted files
-        MT5_SRC=$(find /opt/mt5-portable -name "terminal64.exe" 2>/dev/null | head -1)
-        if [ -n "$MT5_SRC" ]; then
-            MT5_SRC_DIR=$(dirname "$MT5_SRC")
-            mkdir -p "$WINEPREFIX/drive_c/Program Files/MetaTrader 5"
-            cp -r "$MT5_SRC_DIR"/* "$WINEPREFIX/drive_c/Program Files/MetaTrader 5/"
-            echo "       MT5 installed from pre-extracted files"
-        else
-            # No terminal64.exe found — copy entire extracted content and search
-            mkdir -p "$WINEPREFIX/drive_c/Program Files/MetaTrader 5"
-            cp -r /opt/mt5-portable/* "$WINEPREFIX/drive_c/Program Files/MetaTrader 5/" 2>/dev/null || true
-            echo "       MT5 files copied (terminal64.exe not found in expected location)"
-            echo "       Contents:"
-            find "$WINEPREFIX/drive_c/Program Files/MetaTrader 5" -maxdepth 2 -name "*.exe" 2>/dev/null || true
-        fi
-    else
-        echo "WARNING: /opt/mt5-portable not found — MT5 was not pre-extracted during build"
-        echo "         Skipping MT5 installation"
+    # Also check if it's installed at an alternate path
+    FOUND=$(find "$WINEPREFIX/drive_c" -name "terminal64.exe" 2>/dev/null | head -1)
+    if [ -n "$FOUND" ]; then
+        MT5_EXE="$FOUND"
+        echo "[4/6] MT5 found at $MT5_EXE"
     fi
+fi
 
-    # Verify
-    if [ -f "$MT5_EXE" ]; then
-        echo "       MT5 installed successfully at $MT5_EXE"
+if [ ! -f "$MT5_EXE" ]; then
+    echo "[4/6] Installing MetaTrader 5..."
+
+    # Try pre-extracted files first
+    PRE_MT5=$(find /opt/mt5-portable -name "terminal64.exe" 2>/dev/null | head -1)
+    if [ -n "$PRE_MT5" ]; then
+        echo "       Using pre-extracted MT5 from Docker image..."
+        MT5_SRC_DIR=$(dirname "$PRE_MT5")
+        mkdir -p "$WINEPREFIX/drive_c/Program Files/MetaTrader 5"
+        cp -r "$MT5_SRC_DIR"/* "$WINEPREFIX/drive_c/Program Files/MetaTrader 5/"
+        echo "       MT5 installed from pre-extracted files"
     else
-        FOUND=$(find "$WINEPREFIX/drive_c" -name "terminal64.exe" 2>/dev/null | head -1)
-        if [ -n "$FOUND" ]; then
-            MT5_EXE="$FOUND"
-            echo "       MT5 found at alternate path: $MT5_EXE"
+        echo "       Pre-extracted MT5 not available, running installer under Wine..."
+        echo "       This downloads ~200MB and can take 15-30 minutes on first run."
+        # Download fresh if not already present
+        if [ ! -f /tmp/mt5setup.exe ]; then
+            wget -q -O /tmp/mt5setup.exe "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+        fi
+        wine64 /tmp/mt5setup.exe /auto 2>/dev/null &
+        MT5_INSTALLER_PID=$!
+
+        # Poll for up to 30 minutes
+        MT5_FOUND=false
+        for i in $(seq 1 360); do
+            if [ -f "$MT5_EXE" ]; then
+                MT5_FOUND=true
+                break
+            fi
+            FOUND=$(find "$WINEPREFIX/drive_c" -name "terminal64.exe" 2>/dev/null | head -1)
+            if [ -n "$FOUND" ]; then
+                MT5_EXE="$FOUND"
+                MT5_FOUND=true
+                break
+            fi
+            sleep 5
+            [ $(( i % 60 )) -eq 0 ] && echo "       Still installing... ($((i * 5 / 60)) min elapsed)"
+        done
+
+        kill $MT5_INSTALLER_PID 2>/dev/null || true
+        rm -f /tmp/mt5setup.exe
+
+        if [ "$MT5_FOUND" = true ]; then
+            echo "       MT5 installed successfully at $MT5_EXE"
         else
-            echo "WARNING: MT5 terminal64.exe not found. Trade syncing may not work."
+            echo "WARNING: MT5 installation timed out after 30 minutes."
+            echo "         Trade syncing will not work until MT5 is installed."
         fi
     fi
 else

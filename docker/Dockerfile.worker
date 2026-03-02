@@ -58,16 +58,19 @@ RUN pip install --no-cache-dir -r /opt/sync-engine/requirements-worker.txt && \
 RUN wget -q -O /opt/wine-python/python-installer.exe \
     "https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe"
 
-# Download and extract MetaTrader 5 portable at build time (bypass broken web installer)
-# mt5setup.exe is a self-extracting NSIS archive — 7z can extract MT5 files directly
+# Download MetaTrader 5 portable
+# mt5setup.exe is just a web installer stub (~23MB) that downloads the real MT5 (~200MB)
+# via Wine networking (which fails). Instead we extract the portable MT5 terminal that the
+# installer would download. The setup contains an embedded MT5 in NSIS $PLUGINSDIR.
+# If 7z extraction yields terminal64.exe we use it; otherwise we fall back to running
+# the installer under Wine at startup (with extended timeout).
 RUN wget -q -O /tmp/mt5setup.exe \
     "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe" && \
     mkdir -p /opt/mt5-portable && \
-    cd /opt/mt5-portable && \
-    7z x /tmp/mt5setup.exe -o/opt/mt5-portable 2>/dev/null || true && \
-    rm -f /tmp/mt5setup.exe && \
-    echo "MT5 extracted to /opt/mt5-portable:" && \
-    ls -la /opt/mt5-portable/
+    7z x -o/opt/mt5-portable /tmp/mt5setup.exe 2>/dev/null || true && \
+    echo "=== Extracted contents ===" && \
+    find /opt/mt5-portable -type f -name "*.exe" 2>/dev/null && \
+    rm -f /tmp/mt5setup.exe
 
 # Copy sync engine code
 COPY sync-engine/ /opt/sync-engine/
