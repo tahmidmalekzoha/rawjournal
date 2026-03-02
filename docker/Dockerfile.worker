@@ -22,9 +22,10 @@ RUN dpkg --add-architecture i386 && \
     wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key && \
     wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources && \
     apt-get update && \
-    apt-get install -y --install-recommends winehq-stable || \
-    apt-get install -y --install-recommends winehq-devel || \
-    apt-get install -y wine64 wine32 && \
+    (apt-get install -y --install-recommends winehq-stable \
+     || apt-get install -y --install-recommends winehq-devel \
+     || apt-get install -y --install-recommends winehq-staging \
+     || (echo "WineHQ failed, falling back to distro wine" && apt-get install -y wine64 wine32)) && \
     apt-get install -y --no-install-recommends \
         xvfb winbind \
         python3 python3-venv python3-pip \
@@ -32,8 +33,14 @@ RUN dpkg --add-architecture i386 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Verify wine64 is available
-RUN wine64 --version && echo "Wine installed successfully"
+# Verify wine is available (binary may be wine64 or wine depending on package)
+RUN which wine64 || which wine
+RUN (wine64 --version || wine --version) && echo "Wine installed successfully"
+
+# Create a wrapper so scripts can always use 'wine64'
+RUN if ! which wine64 > /dev/null 2>&1 && which wine > /dev/null 2>&1; then \
+      ln -s $(which wine) /usr/local/bin/wine64; \
+    fi
 
 # Create working dirs
 RUN mkdir -p /opt/mt5 /opt/sync-engine /opt/wine-python /var/log/rawjournal
