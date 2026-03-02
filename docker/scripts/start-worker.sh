@@ -149,12 +149,26 @@ if [ ! -f "$MT5_EXE" ]; then
         if [ "$MT5_FOUND" = true ]; then
             echo "       MT5 installed successfully at $MT5_EXE"
         else
-            echo "WARNING: MT5 installation timed out after 30 minutes."
-            echo "         Trade syncing will not work until MT5 is installed."
+            echo "ERROR: MT5 installation timed out after 30 minutes."
+            echo "       Trade syncing cannot start without terminal64.exe"
         fi
     fi
 else
     echo "[4/6] MT5 already installed"
+fi
+
+# Hard requirement: MT5 terminal must exist before starting bridge/worker
+if [ ! -f "$MT5_EXE" ]; then
+    FOUND=$(find "$WINEPREFIX/drive_c" -name "terminal64.exe" 2>/dev/null | head -1)
+    if [ -n "$FOUND" ]; then
+        MT5_EXE="$FOUND"
+        echo "       MT5 discovered at alternate path: $MT5_EXE"
+    else
+        echo "ERROR: MT5 terminal64.exe not found after installation attempts"
+        echo "       Marking startup failure and exiting for controlled retry"
+        echo $(( FAIL_COUNT + 1 )) > "$FAIL_COUNT_FILE"
+        exit 1
+    fi
 fi
 
 # --- 5. rpyc bridge server (Wine Python) ---

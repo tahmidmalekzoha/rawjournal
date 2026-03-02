@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import time
+from glob import glob
 from datetime import datetime, timedelta
 
 import redis.asyncio as aioredis
@@ -37,9 +38,24 @@ async def main():
     terminal_path = config.MT5_TERMINAL_PATH.format(worker_id=worker_id)
 
     logger.info(f"Initializing MT5 terminal at {terminal_path}")
+
+    # Try configured path first
     if not mt5.initialize(path=terminal_path):
-        logger.error(f"MT5 init failed: {mt5.last_error()}")
-        return
+        logger.warning(f"MT5 init with configured path failed: {mt5.last_error()}")
+
+        # Try any terminal64.exe found in worker prefix
+        candidates = glob(f"/opt/mt5/worker_{worker_id}/**/terminal64.exe", recursive=True)
+        for candidate in candidates:
+            logger.info(f"Trying alternate MT5 path: {candidate}")
+            if mt5.initialize(path=candidate):
+                terminal_path = candidate
+                break
+        else:
+            # Final fallback: let MT5 library use default path if available
+            logger.info("Trying MT5 initialize() without path as fallback")
+            if not mt5.initialize():
+                logger.error(f"MT5 init failed: {mt5.last_error()}")
+                return
 
     # Login to demo account (stays logged in)
     ok = mt5.login(
