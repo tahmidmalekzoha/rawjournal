@@ -97,36 +97,41 @@ fi
 # --- 4. MetaTrader 5 terminal ---
 MT5_EXE="$WINEPREFIX/drive_c/Program Files/MetaTrader 5/terminal64.exe"
 if [ ! -f "$MT5_EXE" ]; then
-    echo "[4/6] Downloading and installing MetaTrader 5..."
-    wget -q --show-progress -O /tmp/mt5setup.exe "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
-    echo "       Download complete, running installer..."
-    wine64 /tmp/mt5setup.exe /auto 2>/dev/null || true
+    echo "[4/6] Installing MetaTrader 5 from pre-extracted files..."
 
-    # Wait up to 10 minutes for MT5 to finish installing (it downloads ~200MB in background)
-    echo "       Waiting for MT5 installation to complete (up to 10 min)..."
-    MT5_FOUND=false
-    for i in $(seq 1 120); do
-        if [ -f "$MT5_EXE" ]; then
-            MT5_FOUND=true
-            break
+    # Check if MT5 was pre-extracted during Docker build
+    if [ -d "/opt/mt5-portable" ]; then
+        # Find terminal64.exe in the extracted files
+        MT5_SRC=$(find /opt/mt5-portable -name "terminal64.exe" 2>/dev/null | head -1)
+        if [ -n "$MT5_SRC" ]; then
+            MT5_SRC_DIR=$(dirname "$MT5_SRC")
+            mkdir -p "$WINEPREFIX/drive_c/Program Files/MetaTrader 5"
+            cp -r "$MT5_SRC_DIR"/* "$WINEPREFIX/drive_c/Program Files/MetaTrader 5/"
+            echo "       MT5 installed from pre-extracted files"
+        else
+            # No terminal64.exe found — copy entire extracted content and search
+            mkdir -p "$WINEPREFIX/drive_c/Program Files/MetaTrader 5"
+            cp -r /opt/mt5-portable/* "$WINEPREFIX/drive_c/Program Files/MetaTrader 5/" 2>/dev/null || true
+            echo "       MT5 files copied (terminal64.exe not found in expected location)"
+            echo "       Contents:"
+            find "$WINEPREFIX/drive_c/Program Files/MetaTrader 5" -maxdepth 2 -name "*.exe" 2>/dev/null || true
         fi
-        # Also check alternate install paths
+    else
+        echo "WARNING: /opt/mt5-portable not found — MT5 was not pre-extracted during build"
+        echo "         Skipping MT5 installation"
+    fi
+
+    # Verify
+    if [ -f "$MT5_EXE" ]; then
+        echo "       MT5 installed successfully at $MT5_EXE"
+    else
         FOUND=$(find "$WINEPREFIX/drive_c" -name "terminal64.exe" 2>/dev/null | head -1)
         if [ -n "$FOUND" ]; then
             MT5_EXE="$FOUND"
-            MT5_FOUND=true
-            break
+            echo "       MT5 found at alternate path: $MT5_EXE"
+        else
+            echo "WARNING: MT5 terminal64.exe not found. Trade syncing may not work."
         fi
-        sleep 5
-        [ $(( i % 12 )) -eq 0 ] && echo "       Still waiting... (${i} / 120 checks)"
-    done
-    rm -f /tmp/mt5setup.exe
-
-    if [ "$MT5_FOUND" = false ]; then
-        echo "WARNING: MT5 may not have installed correctly"
-        find "$WINEPREFIX/drive_c/Program Files" -maxdepth 2 2>/dev/null || true
-    else
-        echo "       MT5 installed successfully at $MT5_EXE"
     fi
 else
     echo "[4/6] MT5 already installed"
