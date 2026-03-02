@@ -13,16 +13,27 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV DISPLAY=:99
 ENV WINEDEBUG=-all
 
-# Install Wine, Xvfb, native Python 3, and tools
+# Install Wine (from WineHQ for a working wine64 binary), Xvfb, native Python 3, and tools
 RUN dpkg --add-architecture i386 && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-        wine64 wine32 winbind xvfb \
+        software-properties-common gnupg2 wget ca-certificates && \
+    mkdir -pm755 /etc/apt/keyrings && \
+    wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key && \
+    wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources && \
+    apt-get update && \
+    apt-get install -y --install-recommends winehq-stable || \
+    apt-get install -y --install-recommends winehq-devel || \
+    apt-get install -y wine64 wine32 && \
+    apt-get install -y --no-install-recommends \
+        xvfb winbind \
         python3 python3-venv python3-pip \
-        wget ca-certificates cabextract \
-        procps net-tools && \
+        cabextract procps net-tools && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Verify wine64 is available
+RUN wine64 --version && echo "Wine installed successfully"
 
 # Create working dirs
 RUN mkdir -p /opt/mt5 /opt/sync-engine /opt/wine-python /var/log/rawjournal
