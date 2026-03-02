@@ -98,16 +98,35 @@ fi
 MT5_EXE="$WINEPREFIX/drive_c/Program Files/MetaTrader 5/terminal64.exe"
 if [ ! -f "$MT5_EXE" ]; then
     echo "[4/6] Downloading and installing MetaTrader 5..."
-    wget -q -O /tmp/mt5setup.exe "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+    wget -q --show-progress -O /tmp/mt5setup.exe "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+    echo "       Download complete, running installer..."
     wine64 /tmp/mt5setup.exe /auto 2>/dev/null || true
-    sleep 20
+
+    # Wait up to 10 minutes for MT5 to finish installing (it downloads ~200MB in background)
+    echo "       Waiting for MT5 installation to complete (up to 10 min)..."
+    MT5_FOUND=false
+    for i in $(seq 1 120); do
+        if [ -f "$MT5_EXE" ]; then
+            MT5_FOUND=true
+            break
+        fi
+        # Also check alternate install paths
+        FOUND=$(find "$WINEPREFIX/drive_c" -name "terminal64.exe" 2>/dev/null | head -1)
+        if [ -n "$FOUND" ]; then
+            MT5_EXE="$FOUND"
+            MT5_FOUND=true
+            break
+        fi
+        sleep 5
+        [ $(( i % 12 )) -eq 0 ] && echo "       Still waiting... (${i} / 120 checks)"
+    done
     rm -f /tmp/mt5setup.exe
 
-    if [ ! -f "$MT5_EXE" ]; then
+    if [ "$MT5_FOUND" = false ]; then
         echo "WARNING: MT5 may not have installed correctly"
-        find "$WINEPREFIX/drive_c" -name "terminal64.exe" 2>/dev/null || true
+        find "$WINEPREFIX/drive_c/Program Files" -maxdepth 2 2>/dev/null || true
     else
-        echo "       MT5 installed successfully"
+        echo "       MT5 installed successfully at $MT5_EXE"
     fi
 else
     echo "[4/6] MT5 already installed"
